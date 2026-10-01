@@ -17,9 +17,15 @@
 <p><input type="file" id="file" accept=".json"> or drop a file anywhere, or paste JSON below.</p>
 <textarea id="text"></textarea>
 <p><button id="go">Open document</button> <span id="error"></span></p>
+<p>
+  <input id="priv" type="password" autocomplete="off" placeholder="Ed25519 private key (PKCS#8, base64 or PEM)"> <button id="sign">Sign</button><br>
+  <input id="pub" placeholder="Ed25519 public key (raw or SPKI, base64 or PEM)"> <button id="verify">Verify</button>
+  Status: <b id="status">—</b>
+</p>
 
 <script>
-  const [css, file, text, go, error] = ['css', 'file', 'text', 'go', 'error'].map(id => document.getElementById(id));
+  const [css, file, text, go, error, priv, pub, sign, verify, status] =
+    ['css', 'file', 'text', 'go', 'error', 'priv', 'pub', 'sign', 'verify', 'status'].map(id => document.getElementById(id));
   const esc = s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
   const label = k => esc(k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
   const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -49,7 +55,46 @@
     } catch (e) { error.textContent = e.message; }
   };
 
-  const load = f => f?.text().then(t => text.value = t);
+  // Signing: Ed25519 over the canonical JSON of the object without `_signature`.
+  // Canonical form (RFC 8785 style): sorted keys, no whitespace, JSON.stringify for strings and numbers.
+  const canon = v => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']'
+    : isObj(v) ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}'
+    : JSON.stringify(v);
+  const bytes = v => { const { _signature, ...rest } = v; return new TextEncoder().encode(canon(rest)); };
+  const b64 = s => Uint8Array.from(atob(s.replace(/-----[^-]+-----|\s/g, '')), c => c.charCodeAt(0));
+  const parseObj = () => { const v = JSON.parse(text.value); if (!isObj(v)) throw Error('Only a JSON object can be signed'); return v; };
+  async function key(input, use) {
+    if (!crypto.subtle) throw Error('Web Crypto is not available here (use https or localhost)');
+    try {
+      const k = b64(input.value);
+      const format = use === 'sign' ? 'pkcs8' : k.length === 32 ? 'raw' : 'spki';
+      return await crypto.subtle.importKey(format, k, 'Ed25519', false, [use]);
+    } catch (e) {
+      throw Error(e.name === 'NotSupportedError' ? 'Ed25519 is not supported in this browser' : `Invalid ${use === 'sign' ? 'private' : 'public'} key`);
+    }
+  }
+  const run = f => async () => { error.textContent = ''; try { await f(); } catch (e) { error.textContent = e.message; } };
+
+  sign.onclick = run(async () => {
+    const v = parseObj(), k = await key(priv, 'sign');
+    delete v._signature;
+    const sig = new Uint8Array(await crypto.subtle.sign('Ed25519', k, bytes(v)));
+    v._signature = btoa(String.fromCharCode(...sig));
+    text.value = JSON.stringify(v, null, 2);
+    status.textContent = '—';
+  });
+
+  verify.onclick = run(async () => {
+    const v = parseObj();
+    if (!('_signature' in v)) return status.textContent = 'Unsigned';
+    const k = await key(pub, 'verify');
+    let ok = false;
+    try { ok = await crypto.subtle.verify('Ed25519', k, b64(v._signature), bytes(v)); } catch {}
+    status.textContent = ok ? 'Verified' : 'Invalid';
+  });
+
+  text.oninput = () => status.textContent = '—';
+  const load = f => f?.text().then(t => { text.value = t; status.textContent = '—'; });
   file.onchange = () => load(file.files[0]);
   ondragover = e => e.preventDefault();
   ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
