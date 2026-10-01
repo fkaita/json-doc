@@ -1,0 +1,56 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSON Reader</title>
+<style id="css">
+  body { font: 14px/1.4 system-ui, sans-serif; max-width: 760px; margin: auto; padding: 16px; }
+  textarea { width: 100%; height: 60vh; box-sizing: border-box; }
+  dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px 16px; }
+  dt { color: #777; font-size: 12px; }
+  dd { margin: 0; overflow-wrap: anywhere; }
+  section { grid-column: 1 / -1; padding-left: 12px; border-left: 1px solid #ddd; }
+  table { display: block; overflow-x: auto; border-collapse: collapse; }
+  th, td { text-align: left; vertical-align: top; padding: 2px 12px 2px 0; border-bottom: 1px solid #eee; }
+  tr { break-inside: avoid; }
+</style>
+
+<p><input type="file" id="file" accept=".json"> or drop a file anywhere, or paste JSON below.</p>
+<textarea id="text"></textarea>
+<p><button id="go">Open document</button> <span id="error"></span></p>
+
+<script>
+  const [css, file, text, go, error] = ['css', 'file', 'text', 'go', 'error'].map(id => document.getElementById(id));
+  const esc = s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+  const label = k => esc(k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
+  const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+  const isPrim = v => v == null || typeof v !== 'object';
+
+  function render(v) {
+    if (isPrim(v)) return v == null ? '—' : esc(v);
+    if (Array.isArray(v) && v.length && v.every(isObj)) {
+      const keys = [...new Set(v.flatMap(Object.keys))];
+      return '<table><tr>' + keys.map(k => `<th>${label(k)}</th>`).join('') + '</tr>' +
+        v.map(o => '<tr>' + keys.map(k => `<td>${render(o[k])}</td>`).join('') + '</tr>').join('') + '</table>';
+    }
+    if (Array.isArray(v)) return '<ul>' + v.map(x => `<li>${render(x)}</li>`).join('') + '</ul>';
+    return '<dl>' + Object.entries(v).map(([k, x]) => isPrim(x)
+      ? `<div><dt>${label(k)}</dt><dd>${render(x)}</dd></div>`
+      : `<section><strong>${label(k)}</strong>${render(x)}</section>`).join('') + '</dl>';
+  }
+
+  // Opens the document in a new tab, built locally in the browser.
+  go.onclick = () => {
+    try {
+      const html = render(JSON.parse(text.value));
+      const w = window.open('');
+      w.document.write(`<!doctype html><meta charset="utf-8"><title>JSON Reader</title><style>${css.textContent}</style>${html}`);
+      w.document.close();
+      error.textContent = '';
+    } catch (e) { error.textContent = e.message; }
+  };
+
+  const load = f => f?.text().then(t => text.value = t);
+  file.onchange = () => load(file.files[0]);
+  ondragover = e => e.preventDefault();
+  ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
+</script>
