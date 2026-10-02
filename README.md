@@ -1,14 +1,14 @@
 # json-doc
 
-Open a JSON file and read it like a document. Sign it, and verify who signed it and when. One HTML file, no dependencies, no build step.
+Open a JSON file and read it like a document. Sign it, and verify who signed it and when. The app is one HTML file: no dependencies, no build step.
 
 **Use it:** https://json-doc.com — or download `index.html` and open it in a browser.
 
-Everything runs in your browser. Documents never leave it: signing sends only a hash.
+Everything runs in your browser. Documents never leave it: signing sends only your domain, your secret and a fingerprint of the document to the signing server.
 
 ## Quick start
 
-**Read a document:** open https://json-doc.com, choose or drop a JSON file, and click **Open document**.
+**Read a document:** open https://json-doc.com, choose, drop or paste a JSON document, and click **Open document**.
 
 Try it with the files in [`samples/`](samples/): `invoice.json` (plain), `invoice.signed.json` (✓), `invoice.self-signed.json` (⚠) and `invoice.tampered.json` (✗).
 
@@ -25,9 +25,9 @@ Next time: add the document, enter your domain and secret, and click **Sign**.
 
 To stop a secret from working, remove its DNS record.
 
-## How it works
+## How documents are shown
 
-Pick or drop a `.json` file, or paste JSON, then click **Open document**. The document opens in a new tab, ready to print.
+**Open document** shows the JSON as a document in a new tab, ready to print:
 
 - Plain values → label and value, laid out in a compact grid
 - Objects → indented sections
@@ -45,13 +45,15 @@ A signed file has exactly two top-level fields, `document` and `signature`. json
 - **Red ✗** — the document or signature was changed, is missing, or comes from a server json-doc does not trust.
 - **No banner** — not a signed file (for example, it has other top-level fields).
 
-Changing any value, value type (`40` vs `"40"`) or array order breaks the signature. Key order and whitespace do not.
+The signature covers `document` in canonical JSON ([RFC 8785](https://www.rfc-editor.org/rfc/rfc8785)): keys sorted, no whitespace. So key order and whitespace don't matter, but changing any value, value type (`40` vs `"40"`) or array order breaks the signature.
+
+Signature checks need a recent browser and a secure page: https://json-doc.com, or `index.html` opened from your own computer.
 
 There are two kinds of signature.
 
 ### Server-signed: who signed, and when
 
-A signing server confirms which domain signed the document, and when. Only the document's hash is sent to the server.
+A signing server confirms which domain signed the document, and when.
 
 ```json
 {
@@ -64,17 +66,15 @@ json-doc checks it with the server's key from the `SERVERS` list in `index.html`
 
 **✓ Signed by northwind.example · 2026-10-01 09:30 UTC** (Confirmed by sign.example.org)
 
-To sign, see [Quick start](#quick-start). Only your domain, your secret and a fingerprint of the document are sent to the signing server (`SIGN_SERVER` in `index.html`).
+To sign, see [Quick start](#quick-start).
 
 **API**
 
-`POST /sign` with `{ "domain": "northwind.example", "token": "<secret>", "hash": "…" }` returns the `signature` object. `hash` is the hex SHA-256 of the canonical `document` (see below). The signed file is `{ "document": …, "signature": … }`.
+`POST /sign` with `{ "domain": "northwind.example", "token": "<secret>", "hash": "…" }` returns the `signature` object. `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`.
 
 `GET /key` returns the server's public key.
 
 **Run a signing server**
-
-The server is `server/worker.js`.
 
 1. Create the server's private key. Keep it secret.
    ```bash
@@ -92,8 +92,6 @@ The server is `server/worker.js`.
    ```
 3. To sign with it from your copy of json-doc, set `SIGN_SERVER` in `index.html`.
 
-The server's public key is at `/key`. It checks DNS over HTTPS, so answers can't be faked on the network.
-
 **Trusted servers**
 
 The `SERVERS` list in `index.html` holds the servers json-doc trusts, starting with `sign.json-doc.com`. A server is added by pull request if it:
@@ -105,7 +103,7 @@ The `SERVERS` list in `index.html` holds the servers json-doc trusts, starting w
 
 Readers can also add servers to their own copy of `index.html`.
 
-If a server's key leaks, its entry gets an `until` time, and documents with a later time are rejected. Documents with an earlier time still show ✓, but whoever has the leaked key can also put an earlier time on a forgery. For those, ask the server operator, who keeps a log of everything the server signed.
+If a server's key leaks, its entry gets an `until` time and later documents are rejected. Earlier documents still show ✓, but could be forgeries backdated with the leaked key. The server's log tells them apart.
 
 ### Self-signed: unchanged only
 
@@ -118,15 +116,15 @@ The signer uses their own key and includes it in the file. No server is needed.
 }
 ```
 
-json-doc shows **⚠ Signer not confirmed** with the key. This proves the document is unchanged since that key signed it, not who owns the key: anyone can edit a document and re-sign it with a new key. Compare the key with one you got from the signer.
+json-doc shows **⚠ Signer not confirmed** with the key. The document is unchanged since that key signed it, but anyone can make a key, so ask the signer if it is theirs.
 
 **Signing**
 
-1. Turn `document` into canonical JSON ([RFC 8785](https://www.rfc-editor.org/rfc/rfc8785)): object keys sorted, no whitespace. In JavaScript that is `JSON.stringify` with sorted keys, as in the code below.
+1. Turn `document` into canonical JSON. In JavaScript that is `JSON.stringify` with sorted keys, as in the code below.
 2. Sign that text (UTF-8) with an Ed25519 private key.
 3. Put the signature in `signature.value` and the public key in `signature.publicKey`, both as standard base64 with padding. Any edit to their text, even removing `=`, makes the signature fail.
 
-To verify outside the browser (Node.js, no dependencies), from the repository folder (replace the file name with your own):
+To verify outside the browser, run this with Node.js in the repository folder (replace the file name with yours):
 
 ```bash
 node -e '
@@ -138,8 +136,6 @@ try { ok = c.verify(null, Buffer.from(canonical(f.document)), c.createPublicKey(
 console.log(ok ? "valid" : "INVALID");
 ' samples/invoice.self-signed.json
 ```
-
-Signature checks need a recent browser and a secure page: the hosted version, or `index.html` opened from your own computer.
 
 ## What json-doc does not check
 
