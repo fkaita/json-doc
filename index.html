@@ -144,6 +144,8 @@
   // The download is named after the opened file: invoice.json → invoice.signed.json.
   let fileName = 'document';
   const load = f => f?.text().then(t => { text.value = t; fileName = f.name.replace(/\.[^.]*$/, '').replace(/\.signed$/i, ''); });
+  // Pasting over all the text is a new document; small edits keep the opened file's name.
+  text.onpaste = () => { if (text.selectionStart === 0 && text.selectionEnd === text.value.length) fileName = 'document'; };
   file.onchange = () => { load(file.files[0]); file.value = ''; };
   ondragover = e => e.preventDefault();
   ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
