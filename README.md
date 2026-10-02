@@ -49,9 +49,7 @@ Changing any value in a signed document breaks its signature.
 
 Signature checks need a recent browser and a secure page: https://json-doc.com, or `index.html` opened from your own computer.
 
-## For developers
-
-### Repository
+## Repository
 
 | Path | What it is |
 |---|---|
@@ -63,7 +61,7 @@ Signature checks need a recent browser and a secure page: https://json-doc.com, 
 | `samples/` | Example documents for each result. |
 | `CNAME` | Tells GitHub Pages to serve the app at json-doc.com. |
 
-### How signing works
+## How signing works
 
 A signed file has exactly two top-level fields, `document` and `signature`. Any other top-level field makes it a plain file.
 
@@ -95,7 +93,7 @@ To make one:
 2. Sign that text (UTF-8) with an Ed25519 private key.
 3. Put the signature in `signature.value` and the public key in `signature.publicKey`, both as standard base64 with padding. Any edit to their text, even removing `=`, makes the signature fail.
 
-### Sign from code
+## Sign from code
 
 There is no registration: the server checks the domain's DNS record on every request.
 
@@ -123,7 +121,7 @@ There is no registration: the server checks the domain's DNS record on every req
 
 To call the API from your own code: `POST /sign` with `{ "domain": "example.com", "token": "<secret>", "hash": "…" }` returns the `signature` object, where `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`. `GET /key` returns the server's public key.
 
-### Run a signing server
+## Run a signing server
 
 1. Create the server's private key. Keep it secret.
    ```bash
