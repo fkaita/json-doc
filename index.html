@@ -12,6 +12,10 @@
   table { display: block; overflow-x: auto; border-collapse: collapse; }
   th, td { text-align: left; vertical-align: top; padding: 2px 12px 2px 0; border-bottom: 1px solid #eee; }
   tr { break-inside: avoid; }
+  .ok, .bad { padding: 8px 12px; border-radius: 6px; font-weight: bold; print-color-adjust: exact; }
+  .ok { background: #e6f4ea; color: #137333; }
+  .bad { background: #fce8e6; color: #c5221f; }
+  small { display: block; font-weight: normal; color: #555; overflow-wrap: anywhere; }
 </style>
 
 <p><input type="file" id="file" accept=".json"> or drop a file anywhere, or paste JSON below.</p>
@@ -38,19 +42,36 @@
       : `<section><strong>${label(k)}</strong>${render(x)}</section>`).join('') + '</dl>';
   }
 
-  // Opens the document in a new tab, built locally in the browser.
-  go.onclick = () => {
+  // Checks an Ed25519 signature over canonical(document), using the public key in the file.
+  // Canonical JSON (RFC 8785): keys sorted, no whitespace, so key order and formatting don't matter.
+  const canonical = v => JSON.stringify(v, (_, x) => isObj(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
+  // Key and signature are decoded strictly: any edit to their base64 text (even padding) is rejected.
+  const bytes = t => { const b = atob(t); if (btoa(b) !== t) throw Error('Invalid base64'); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+  async function verified({ document: doc, signature: s }) {
     try {
-      const html = render(JSON.parse(text.value));
-      const w = window.open('');
-      w.document.write(`<!doctype html><meta charset="utf-8"><title>JSON Reader</title><style>${css.textContent}</style>${html}`);
-      w.document.close();
-      error.textContent = '';
-    } catch (e) { error.textContent = e.message; }
+      const key = await crypto.subtle.importKey('spki', bytes(s.publicKey), 'Ed25519', false, ['verify']);
+      return await crypto.subtle.verify('Ed25519', key, bytes(s.value), new TextEncoder().encode(canonical(doc)));
+    } catch { return false; }
+  }
+
+  // Opens the document in a new tab, built locally in the browser.
+  go.onclick = async () => {
+    let data, status = '';
+    try { data = JSON.parse(text.value); error.textContent = ''; } catch (e) { return error.textContent = e.message; }
+    const w = window.open('');
+    // Signed file: { document, signature } at the top level, nothing else.
+    if (isObj(data) && 'document' in data && Object.keys(data).every(k => k === 'document' || k === 'signature')) {
+      status = await verified(data)
+        ? `<p class="ok">✓ Signature valid<small>Key: ${esc(data.signature.publicKey)}</small></p>`
+        : '<p class="bad">✗ Signature not valid</p>';
+      data = data.document;
+    }
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>JSON Reader</title><style>${css.textContent}</style>${status}${render(data)}`);
+    w.document.close();
   };
 
   const load = f => f?.text().then(t => text.value = t);
-  file.onchange = () => load(file.files[0]);
+  file.onchange = () => { load(file.files[0]); file.value = ''; };
   ondragover = e => e.preventDefault();
   ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
 </script>
