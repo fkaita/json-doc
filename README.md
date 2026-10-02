@@ -96,37 +96,6 @@ There is no registration: the server checks the domain's DNS record on every req
 
 To call the API from your own code: `POST /sign` with `{ "domain": "example.com", "token": "<secret>", "hash": "…" }` returns the `signature` object, where `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`. `GET /key` returns the server's public key.
 
-**Run a signing server**
-
-1. Create the server's private key. Keep it secret.
-   ```bash
-   node -e 'console.log(require("crypto").generateKeyPairSync("ed25519").privateKey.export({ type: "pkcs8", format: "der" }).toString("base64"))'
-   ```
-2. Run it on Cloudflare Workers (HTTPS included). `server/wrangler.toml` is set up for sign.json-doc.com. For your own server, change `SERVER_NAME` and `routes`, and replace the `LOG` id with your own log from `npx wrangler kv namespace create LOG`. Then, in `server/`:
-   ```bash
-   npx wrangler deploy
-   npx wrangler secret put SIGNING_KEY
-   ```
-
-   Or run it anywhere with Node.js 20 or later, behind HTTPS. It logs to `signed.log`.
-   ```bash
-   SERVER_NAME=sign.example.org SIGNING_KEY=<key> node server/node.js
-   ```
-3. To sign with it from your copy of json-doc, set `SIGN_SERVER` in `index.html`.
-
-**Trusted servers**
-
-The `SERVERS` list in `index.html` holds the servers json-doc trusts, starting with `sign.json-doc.com`. A server is added by pull request if it:
-
-- runs `server/worker.js`, or checks domains with DNS the same way
-- uses an accurate clock
-- keeps its private key secret
-- keeps its log
-
-Readers can also add servers to their own copy of `index.html`.
-
-If a server's key leaks, its entry gets an `until` time and later documents are rejected. Earlier documents still show ✓, but could be forgeries backdated with the leaked key. The server's log tells them apart.
-
 ### Self-signed: unchanged only
 
 The signer uses their own key and includes it in the file. No server is needed.
@@ -164,7 +133,38 @@ console.log(ok ? "valid" : "INVALID");
 - **Legal identity.** ✓ Signed by example.com means whoever controls example.com signed it, not who the company or person is.
 - **Whether the content is true.** A signature shows who sent the document and that it is unchanged, not that what it says is correct.
 - **Screenshots, printouts and copies of the result page.** Anyone can make a page or PDF that looks like a green ✓. Only trust a result you see after opening the file yourself in json-doc.
-- **Backdated forgeries made with a leaked server key.** See Trusted servers above.
+- **Backdated forgeries made with a leaked server key.** See [Trusted servers](#run-your-own-signing-server) below.
+
+## Run your own signing server
+
+1. Create the server's private key. Keep it secret.
+   ```bash
+   node -e 'console.log(require("crypto").generateKeyPairSync("ed25519").privateKey.export({ type: "pkcs8", format: "der" }).toString("base64"))'
+   ```
+2. Run it on Cloudflare Workers (HTTPS included). `server/wrangler.toml` is set up for sign.json-doc.com. For your own server, change `SERVER_NAME` and `routes`, and replace the `LOG` id with your own log from `npx wrangler kv namespace create LOG`. Then, in `server/`:
+   ```bash
+   npx wrangler deploy
+   npx wrangler secret put SIGNING_KEY
+   ```
+
+   Or run it anywhere with Node.js 20 or later, behind HTTPS. It logs to `signed.log`.
+   ```bash
+   SERVER_NAME=sign.example.org SIGNING_KEY=<key> node server/node.js
+   ```
+3. To sign with it from your copy of json-doc, set `SIGN_SERVER` in `index.html`.
+
+**Trusted servers**
+
+The `SERVERS` list in `index.html` holds the servers json-doc trusts, starting with `sign.json-doc.com`. A server is added by pull request if it:
+
+- runs `server/worker.js`, or checks domains with DNS the same way
+- uses an accurate clock
+- keeps its private key secret
+- keeps its log
+
+Readers can also add servers to their own copy of `index.html`.
+
+If a server's key leaks, its entry gets an `until` time and later documents are rejected. Earlier documents still show ✓, but could be forgeries backdated with the leaked key. The server's log tells them apart.
 
 ## Repository
 
