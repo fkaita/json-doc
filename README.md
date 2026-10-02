@@ -60,20 +60,29 @@ To stop a token from signing, remove its DNS record.
 
 **Run a signing server**
 
-```bash
-SERVER_NAME=sign.example.org node server/server.js
-```
+1. Create the server's private key. Keep it secret.
+   ```bash
+   node -e 'console.log(require("crypto").generateKeyPairSync("ed25519").privateKey.export({ type: "pkcs8", format: "der" }).toString("base64"))'
+   ```
+2. Run it on Cloudflare Workers (HTTPS included). In `server/`, set `SERVER_NAME` in `wrangler.toml`, then:
+   ```bash
+   npx wrangler secret put SIGNING_KEY
+   npx wrangler deploy
+   ```
+   To keep a log of every signature, create a KV namespace (`npx wrangler kv namespace create LOG`) and add it to `wrangler.toml`.
 
-- Serve it over HTTPS.
-- It creates `server-key.pem` (keep it secret) and `signed.log` (a record of everything it signed).
-- It prints its public key, also available at `/key`.
-- Options: `PORT` (default 8080), `KEY_FILE`, `LOG_FILE`.
+   Or run it anywhere with Node.js 20 or later, behind HTTPS. It logs to `signed.log`.
+   ```bash
+   SERVER_NAME=sign.example.org SIGNING_KEY=<key> node server/node.mjs
+   ```
+
+The server's public key is at `/key`. It checks DNS over HTTPS, so answers can't be faked on the network.
 
 **Trusted servers**
 
 The `SERVERS` list is empty until the first server is running. A server is added by pull request if it:
 
-- runs `server/server.js` or checks domains with DNS the same way
+- runs `server/worker.mjs`, or checks domains with DNS the same way
 - uses an accurate clock
 - keeps its private key secret
 - keeps its log

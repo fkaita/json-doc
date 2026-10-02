@@ -1,3 +1,4 @@
-# Signing server secrets and log (see server/server.js)
-server-key.pem
+# Signing server secrets and log (see server/)
 signed.log
+.dev.vars
+.wrangler/

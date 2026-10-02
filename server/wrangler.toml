@@ -1,0 +1,12 @@
+# Cloudflare Workers settings. Deploy with: npx wrangler deploy (from this folder)
+name = "json-doc-sign"
+main = "worker.mjs"
+compatibility_date = "2026-09-01"
+
+[vars]
+SERVER_NAME = "sign.example.org"
+
+# Keeps every signature. Create with `npx wrangler kv namespace create LOG` and paste the id.
+# [[kv_namespaces]]
+# binding = "LOG"
+# id = "..."
