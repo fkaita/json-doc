@@ -102,10 +102,12 @@ Sign from code with an existing signing server. These steps use sign.json-doc.co
    export SECRET=$(openssl rand -base64 32)
    echo "$SECRET"
    ```
-2. Add a TXT record named `_json-doc.example.com` to your domain, with this value (the secret's fingerprint):
-   ```bash
-   printf %s "$SECRET" | shasum -a 256 | cut -d' ' -f1
-   ```
+2. Add a TXT record in your domain's DNS settings:
+   - **Name:** `_json-doc.` followed by your domain, e.g. `_json-doc.example.com`. If your DNS settings add your domain for you, enter the name without it, e.g. just `_json-doc`.
+   - **Value:** your secret's fingerprint, printed by:
+     ```bash
+     printf %s "$SECRET" | shasum -a 256 | cut -d' ' -f1
+     ```
 3. Sign. This Node.js command reads `invoice.json`, sends its fingerprint with your domain and secret to sign.json-doc.com, and saves the signed document as `invoice.signed.json`. Replace `invoice.json` and `example.com` with your own.
    ```bash
    node -e '
