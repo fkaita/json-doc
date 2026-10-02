@@ -152,7 +152,13 @@ The `SERVERS` list in `index.html` holds the servers json-doc trusts, starting w
 
 Readers can also add servers to their own copy of `index.html`.
 
-If a server's key leaks, its entry gets an `until` time and later documents are rejected. Earlier documents still show ✓, but could be forgeries backdated with the leaked key. The server's log tells them apart.
+If a server's key leaks, add an `until` time to its entry in `SERVERS`:
+
+```js
+'sign.json-doc.com': [{ publicKey: 'MCow…', until: '2026-11-05T14:00:00Z' }],
+```
+
+Documents signed from that time on show ✗. Earlier ones still show ✓, so check any doubtful ones against the server's log.
 
 ## License
 
