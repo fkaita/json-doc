@@ -38,7 +38,7 @@ If your secret is lost or leaked, remove its DNS record. Nobody can sign with th
 
 If the document is signed, a banner above it shows the result:
 
-- **Green ✓ Signed by example.com** — a trusted signing server confirms who signed it and when, and the document is unchanged.
+- **Green ✓ Signed by example.com** — a [trusted](#trusted-servers) signing server confirms who signed it and when, and the document is unchanged.
 - **Amber ⚠ Signer not confirmed** — the document is unchanged since it was signed, but nobody confirms who signed it (self-signed). Ask the signer if the key shown is theirs.
 - **Red ✗** — the document or signature was changed, is missing, or comes from a server json-doc does not trust.
 - **No banner** — not a signed file.
@@ -141,7 +141,7 @@ To call the API from your own code: `POST /sign` with `{ "domain": "example.com"
      ```
 3. To sign with it from your copy of json-doc, set `SIGN_SERVER` in `index.html`.
 
-**Trusted servers**
+### Trusted servers
 
 The `SERVERS` list in `index.html` holds the servers json-doc trusts, starting with `sign.json-doc.com`. A server is added by pull request if it:
 
