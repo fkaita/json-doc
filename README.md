@@ -73,7 +73,7 @@ To stop a token from signing, remove its DNS record.
 
    Or run it anywhere with Node.js 20 or later, behind HTTPS. It logs to `signed.log`.
    ```bash
-   SERVER_NAME=sign.example.org SIGNING_KEY=<key> node server/node.mjs
+   SERVER_NAME=sign.example.org SIGNING_KEY=<key> node server/node.js
    ```
 
 The server's public key is at `/key`. It checks DNS over HTTPS, so answers can't be faked on the network.
@@ -82,7 +82,7 @@ The server's public key is at `/key`. It checks DNS over HTTPS, so answers can't
 
 The `SERVERS` list is empty until the first server is running. A server is added by pull request if it:
 
-- runs `server/worker.mjs`, or checks domains with DNS the same way
+- runs `server/worker.js`, or checks domains with DNS the same way
 - uses an accurate clock
 - keeps its private key secret
 - keeps its log

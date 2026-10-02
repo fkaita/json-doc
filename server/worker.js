@@ -1,7 +1,7 @@
 // json-doc signing server. Confirms which domain signed a document hash, and when.
-// Runs on Cloudflare Workers, or on Node.js with node.mjs. Uses only standard Web APIs.
+// Runs on Cloudflare Workers, or on Node.js with node.js. Uses only standard Web APIs.
 // Settings: SERVER_NAME (public name, e.g. sign.example.org), SIGNING_KEY (secret: base64 PKCS#8 Ed25519 key),
-// LOG (keeps every signature: a Workers KV namespace, or a file with node.mjs).
+// LOG (keeps every signature: a Workers KV namespace, or a file with node.js).
 
 const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
 const canonical = v => JSON.stringify(v, (_, x) => isObj(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);

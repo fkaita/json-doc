@@ -1,6 +1,6 @@
 # Cloudflare Workers settings. Deploy with: npx wrangler deploy (from this folder)
 name = "json-doc-sign"
-main = "worker.mjs"
+main = "worker.js"
 compatibility_date = "2026-09-01"
 
 [vars]
