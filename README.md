@@ -56,7 +56,7 @@ Signature checks need a recent browser and a secure page: https://json-doc.com, 
 | Path | What it is |
 |---|---|
 | `index.html` | The whole app: reads, signs and verifies documents. Served at https://json-doc.com. |
-| `server/worker.js` | The signing server, for Cloudflare Workers. |
+| `server/worker.js` | The signing server. Runs on Cloudflare Workers as-is, or on any host with `server/node.js`. |
 | `server/node.js` | Runs the signing server on Node.js instead. |
 | `server/wrangler.toml` | Cloudflare settings for sign.json-doc.com. |
 | `server/package.json` | Lets Node.js load the server files. |
@@ -129,16 +129,16 @@ To call the API from your own code: `POST /sign` with `{ "domain": "example.com"
    ```bash
    node -e 'console.log(require("crypto").generateKeyPairSync("ed25519").privateKey.export({ type: "pkcs8", format: "der" }).toString("base64"))'
    ```
-2. Run it on Cloudflare Workers (HTTPS included). `server/wrangler.toml` is set up for sign.json-doc.com. For your own server, change `SERVER_NAME` and `routes`, and replace the `LOG` id with your own log from `npx wrangler kv namespace create LOG`. Then, in `server/`:
-   ```bash
-   npx wrangler deploy
-   npx wrangler secret put SIGNING_KEY
-   ```
-
-   Or run it anywhere with Node.js 20 or later, behind HTTPS. It logs to `signed.log`.
-   ```bash
-   SERVER_NAME=sign.example.org SIGNING_KEY=<key> node server/node.js
-   ```
+2. Run it in one of two ways:
+   - **Any server with Node.js 20 or later** (your own machine, a VPS, or a container platform). Put it behind HTTPS. It logs to `signed.log`.
+     ```bash
+     SERVER_NAME=sign.example.org SIGNING_KEY=<key> node server/node.js
+     ```
+   - **Cloudflare Workers** (HTTPS included). `server/wrangler.toml` is set up for sign.json-doc.com: change `SERVER_NAME` and `routes`, and replace the `LOG` id with your own log from `npx wrangler kv namespace create LOG`. Then, in `server/`:
+     ```bash
+     npx wrangler deploy
+     npx wrangler secret put SIGNING_KEY
+     ```
 3. To sign with it from your copy of json-doc, set `SIGN_SERVER` in `index.html`.
 
 **Trusted servers**
