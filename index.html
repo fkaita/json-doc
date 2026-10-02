@@ -28,7 +28,7 @@
 <p>Your secret <input id="token" type="password" autocomplete="off"></p>
 <p><button id="sign">Sign</button></p>
 <p id="signStatus"></p>
-<p><a id="download" download="signed.json" hidden>Download signed document</a></p>
+<p><a id="download" hidden>Download signed document</a></p>
 <small>Only your domain, your secret and a fingerprint of the document are sent to <span id="signServer"></span>. The document stays on your computer.</small>
 
 <script>
@@ -135,12 +135,15 @@
       if (!res.ok || body.error) throw Error(body.error);
       text.value = JSON.stringify({ document: doc, signature: body }, null, 2);
       download.href = URL.createObjectURL(new Blob([text.value], { type: 'application/json' }));
+      download.download = fileName + '.signed.json';
       download.hidden = false;
       signStatus.textContent = 'Signed. Click Open document to see it.';
     } catch (e) { signStatus.textContent = e.message; }
   };
 
-  const load = f => f?.text().then(t => text.value = t);
+  // The download is named after the opened file: invoice.json → invoice.signed.json.
+  let fileName = 'document';
+  const load = f => f?.text().then(t => { text.value = t; fileName = f.name.replace(/\.[^.]*$/, '').replace(/\.signed$/i, ''); });
   file.onchange = () => { load(file.files[0]); file.value = ''; };
   ondragover = e => e.preventDefault();
   ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
