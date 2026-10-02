@@ -77,7 +77,6 @@ There is no registration: the server checks the domain's DNS record on every req
    export SECRET=$(openssl rand -base64 32)
    echo "$SECRET"
    ```
-   Later, in a new terminal, run `read -rs SECRET && export SECRET`, paste your saved secret and press Enter. Nothing is shown while you paste.
 2. Add a TXT record named `_json-doc.example.com` to your domain, with this value (the secret's fingerprint):
    ```bash
    printf %s "$SECRET" | shasum -a 256 | cut -d' ' -f1
