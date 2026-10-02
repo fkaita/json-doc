@@ -8,7 +8,7 @@ Everything runs in your browser. Your data is never uploaded.
 
 ## How it works
 
-Pick or drop a `.json` file, or paste JSON, then click **Open document**. The document opens in a new tab, ready to print. Try it with [`sample.json`](sample.json).
+Pick or drop a `.json` file, or paste JSON, then click **Open document**. The document opens in a new tab, ready to print.
 
 - Plain values → label and value, laid out in a compact grid
 - Objects → indented sections
@@ -28,7 +28,7 @@ A signed file has exactly two top-level fields:
 }
 ```
 
-json-doc checks the signature and shows the result above the document. The `signature` part itself is not displayed. Try it with [`sample-signed.json`](sample-signed.json).
+json-doc checks the signature and shows the result above the document. The `signature` part itself is not displayed.
 
 - **✓ Signature valid** — the document is unchanged since it was signed with the key shown. It does not say who owns that key.
 - **✗ Signature not valid** — the document, key or signature was changed, the signature is missing, or it could not be read.
@@ -50,17 +50,17 @@ json-doc checks the signature and shows the result above the document. The `sign
 2. Check `signature.value` against that text using `signature.publicKey`.
 3. If it passes, the data is unchanged. Key order and whitespace don't matter; changing any value, value type (`40` vs `"40"`) or array order does. The key and signature must be exact base64: any edit to their text, even removing `=`, fails.
 
-To verify outside the browser with the same rules (Node.js, no dependencies):
+To verify a file outside the browser with the same rules (Node.js, no dependencies), replace `signed.json` with your file:
 
 ```bash
 node -e '
-const c = require("crypto"), f = require("./sample-signed.json"), s = f.signature;
+const c = require("crypto"), f = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")), s = f.signature;
 const canonical = v => JSON.stringify(v, (_, x) => x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
 const bytes = t => { const b = Buffer.from(t, "base64"); if (b.toString("base64") !== t) throw Error("Invalid base64"); return b; };
 let ok = false;
 try { ok = c.verify(null, Buffer.from(canonical(f.document)), c.createPublicKey({ key: bytes(s.publicKey), format: "der", type: "spki" }), bytes(s.value)); } catch {}
 console.log(ok ? "valid" : "INVALID");
-'
+' signed.json
 ```
 
 Signature checks need a recent browser and a secure page: the hosted version, or `index.html` opened from your own computer.
