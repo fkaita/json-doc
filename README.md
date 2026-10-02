@@ -65,6 +65,36 @@ console.log(ok ? "valid" : "INVALID");
 
 Signature checks need a recent browser and a secure page: the hosted version, or `index.html` opened from your own computer.
 
+## Planned: signing servers
+
+Not built yet. A signing server confirms who signed a document and when.
+
+1. An organization proves to a signing server that it owns its domain, with a DNS record.
+2. To sign, it sends the server a hash of the document. The document itself is never sent.
+3. The server signs the hash, the domain and the current time with its own key.
+
+```json
+{
+  "document": { "...": "the content that was signed" },
+  "signature": { "server": "sign.example.org", "domain": "northwind.example", "time": "2026-10-01T09:30:00Z", "value": "base64 signature" }
+}
+```
+
+json-doc checks the signature with the server's public key from its own trusted list, never from the file, and shows:
+
+**✓ Signed by northwind.example · 2026-10-01 09:30 UTC · via sign.example.org**
+
+Anyone can run a signing server. A server is added to the trusted list by pull request if it:
+
+- checks domain ownership with DNS
+- uses an accurate clock
+- keeps its private key secret
+- logs everything it signs
+
+Readers can also add servers they trust to their own copy.
+
+If a server's key leaks, its entry gets an end date. Documents signed before that date stay valid.
+
 ## License
 
 MIT
