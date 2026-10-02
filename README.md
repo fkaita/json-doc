@@ -21,9 +21,10 @@ Pick or drop a `.json` file, or paste JSON, then click **Open document**. The do
 
 A signed file has exactly two top-level fields, `document` and `signature`. json-doc checks the signature and shows the result above the document:
 
-- **Green ✓** — the signature is valid.
+- **Green ✓ Signed by example.com** — a trusted signing server confirms who signed it and when, and the document is unchanged.
+- **Amber ⚠ Signer not confirmed** — the document is unchanged since it was signed, but nobody confirms who signed it (self-signed).
 - **Red ✗** — the document or signature was changed, is missing, or comes from a server json-doc does not trust.
-- **No banner** — not a signed file (for example, it has other top-level fields). Only trust a green ✓.
+- **No banner** — not a signed file (for example, it has other top-level fields).
 
 Changing any value, value type (`40` vs `"40"`) or array order breaks the signature. Key order and whitespace do not.
 
@@ -42,7 +43,7 @@ A signing server confirms which domain signed the document, and when. Only the d
 
 json-doc checks it with the server's key from the `SERVERS` list in `index.html`, never from the file, and shows:
 
-**✓ Signed by northwind.example · 2026-10-01 09:30 UTC** (via sign.example.org)
+**✓ Signed by northwind.example · 2026-10-01 09:30 UTC** (Confirmed by sign.example.org)
 
 **Sign a document**
 
@@ -106,7 +107,7 @@ The signer uses their own key and includes it in the file. No server is needed.
 }
 ```
 
-json-doc shows **✓ Signature valid** with the key. This proves the document is unchanged since that key signed it, not who owns the key: anyone can edit a document and re-sign it with a new key. Compare the key with one you got from the signer.
+json-doc shows **⚠ Signer not confirmed** with the key. This proves the document is unchanged since that key signed it, not who owns the key: anyone can edit a document and re-sign it with a new key. Compare the key with one you got from the signer.
 
 **Signing**
 
@@ -128,6 +129,13 @@ console.log(ok ? "valid" : "INVALID");
 ```
 
 Signature checks need a recent browser and a secure page: the hosted version, or `index.html` opened from your own computer.
+
+## What json-doc does not check
+
+- **Legal identity.** ✓ Signed by example.com means whoever controls example.com signed it, not who the company or person is.
+- **Whether the content is true.** A signature shows who sent the document and that it is unchanged, not that what it says is correct.
+- **Screenshots, printouts and copies of the result page.** Anyone can make a page or PDF that looks like a green ✓. Only trust a result you see after opening the file yourself in json-doc.
+- **Backdated forgeries made with a leaked server key.** See Trusted servers above.
 
 ## License
 

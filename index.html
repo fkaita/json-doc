@@ -12,8 +12,9 @@
   table { display: block; overflow-x: auto; border-collapse: collapse; }
   th, td { text-align: left; vertical-align: top; padding: 2px 12px 2px 0; border-bottom: 1px solid #eee; }
   tr { break-inside: avoid; }
-  .ok, .bad { padding: 8px 12px; border-radius: 6px; font-weight: bold; print-color-adjust: exact; }
+  .ok, .warn, .bad { padding: 8px 12px; border-radius: 6px; font-weight: bold; print-color-adjust: exact; }
   .ok { background: #e6f4ea; color: #137333; }
+  .warn { background: #fef7e0; color: #8a5300; }
   .bad { background: #fce8e6; color: #c5221f; }
   small { display: block; font-weight: normal; color: #555; overflow-wrap: anywhere; }
 </style>
@@ -82,11 +83,11 @@
         for (const k of keys) {
           if (k.until && !(new Date(s.time) < new Date(k.until))) continue;
           if (await ed25519(k.publicKey, s.value, payload))
-            return ['ok', `✓ Signed by ${esc(s.domain)} · ${esc(s.time.slice(0, 16).replace('T', ' '))} UTC<small>via ${esc(s.server)}</small>`];
+            return ['ok', `✓ Signed by ${esc(s.domain)} · ${esc(s.time.slice(0, 16).replace('T', ' '))} UTC<small>Confirmed by ${esc(s.server)}</small>`];
         }
       // Self-signed: the key is in the file, so this proves the document is unchanged, not who signed it.
       } else if (await ed25519(s.publicKey, s.value, utf8(canonical(doc)))) {
-        return ['ok', `✓ Signature valid<small>Key: ${esc(s.publicKey)}</small>`];
+        return ['warn', `⚠ Signer not confirmed<small>The document is unchanged since it was signed, but anyone can make this kind of signature. Key: ${esc(s.publicKey)}</small>`];
       }
     } catch {}
     return ['bad', '✗ Signature not valid'];
