@@ -46,9 +46,11 @@ json-doc checks it with the server's key from the `SERVERS` list in `index.html`
 
 **Sign a document**
 
-1. Open the signing server's page, for example https://sign.json-doc.com.
-2. Add the document, enter your domain, and click **New token**. Keep the token secret.
-3. Click **Sign**. The first time, it shows the DNS record to add, for example `_json-doc.northwind.example TXT 9edf…`. Add it, then click **Sign** again and download the signed file.
+1. On the json-doc page, add the document and open **Sign this document**.
+2. Enter your domain and click **New token**. Keep the token secret.
+3. Click **Sign**. The first time, it shows the DNS record to add, for example `_json-doc.northwind.example TXT 9edf…`. Add it, then click **Sign** again.
+
+The signed file replaces the text and can be downloaded. Only your domain, token and the document's hash are sent to the signing server (`SIGN_SERVER` in `index.html`).
 
 To stop a token from signing, remove its DNS record.
 

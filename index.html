@@ -21,9 +21,17 @@
 <p><input type="file" id="file" accept=".json"> or drop a file anywhere, or paste JSON below.</p>
 <textarea id="text"></textarea>
 <p><button id="go">Open document</button> <span id="error"></span></p>
+<details>
+  <summary>Sign this document</summary>
+  <p>Sends your domain, your token and the document's hash to <span id="signServer"></span>. The document stays in your browser.</p>
+  <p><input id="domain" placeholder="Domain, e.g. example.com"> <input id="token" type="password" placeholder="Token" autocomplete="off">
+    <button id="newToken">New token</button> <button id="sign">Sign</button></p>
+  <p><span id="signStatus"></span> <a id="download" download="signed.json" hidden>Download signed.json</a></p>
+</details>
 
 <script>
-  const [css, file, text, go, error] = ['css', 'file', 'text', 'go', 'error'].map(id => document.getElementById(id));
+  const [css, file, text, go, error, signServer, domain, token, newToken, sign, signStatus, download] =
+    ['css', 'file', 'text', 'go', 'error', 'signServer', 'domain', 'token', 'newToken', 'sign', 'signStatus', 'download'].map(id => document.getElementById(id));
   const esc = s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
   const label = k => esc(k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
   const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -47,12 +55,15 @@
   const SERVERS = {
     // 'sign.example.org': [{ publicKey: 'MCow…', until: null }],
   };
+  // The signing server this page uses to sign.
+  const SIGN_SERVER = 'https://sign.json-doc.com';
 
   // Canonical JSON (RFC 8785): keys sorted, no whitespace, so key order and formatting don't matter.
   const canonical = v => JSON.stringify(v, (_, x) => isObj(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
   // Keys and signatures are decoded strictly: any edit to their base64 text (even padding) is rejected.
   const bytes = t => { const b = atob(t); if (btoa(b) !== t) throw Error('Invalid base64'); return Uint8Array.from(b, c => c.charCodeAt(0)); };
   const utf8 = s => new TextEncoder().encode(s);
+  const sha256 = async s => [...new Uint8Array(await crypto.subtle.digest('SHA-256', utf8(s)))].map(b => b.toString(16).padStart(2, '0')).join('');
   const ed25519 = async (publicKey, value, data) =>
     crypto.subtle.verify('Ed25519', await crypto.subtle.importKey('spki', bytes(publicKey), 'Ed25519', false, ['verify']), bytes(value), data);
 
@@ -63,8 +74,7 @@
       if (s.server !== undefined) {
         const keys = Object.hasOwn(SERVERS, s.server) && SERVERS[s.server];
         if (!keys) return ['bad', `✗ Not signed by a trusted server<small>Server: ${esc(s.server)}</small>`];
-        const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', utf8(canonical(doc))))].map(b => b.toString(16).padStart(2, '0')).join('');
-        const payload = utf8(canonical({ domain: s.domain, hash, server: s.server, time: s.time }));
+        const payload = utf8(canonical({ domain: s.domain, hash: await sha256(canonical(doc)), server: s.server, time: s.time }));
         for (const k of keys) {
           if (k.until && !(new Date(s.time) < new Date(k.until))) continue;
           if (await ed25519(k.publicKey, s.value, payload))
@@ -91,6 +101,31 @@
     }
     w.document.write(`<!doctype html><meta charset="utf-8"><title>JSON Reader</title><style>${css.textContent}</style>${status}${render(data)}`);
     w.document.close();
+  };
+
+  // Signing: only the domain, the token and the document's hash are sent to SIGN_SERVER.
+  signServer.textContent = new URL(SIGN_SERVER).host;
+  newToken.onclick = () => {
+    token.type = 'text';
+    token.value = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/[+/=]/g, c => ({ '+': '-', '/': '_', '=': '' })[c]);
+  };
+  sign.onclick = async () => {
+    download.hidden = true;
+    signStatus.textContent = 'Signing…';
+    try {
+      let doc = JSON.parse(text.value);
+      if (isObj(doc) && 'document' in doc && 'signature' in doc) doc = doc.document;
+      const res = await fetch(SIGN_SERVER + '/sign', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ domain: domain.value.trim().toLowerCase(), token: token.value, hash: await sha256(canonical(doc)) })
+      });
+      const body = await res.json();
+      if (!res.ok) throw Error(body.error);
+      text.value = JSON.stringify({ document: doc, signature: body }, null, 2);
+      download.href = URL.createObjectURL(new Blob([text.value], { type: 'application/json' }));
+      download.hidden = false;
+      signStatus.textContent = 'Signed. Click Open document to check it.';
+    } catch (e) { signStatus.textContent = e.message; }
   };
 
   const load = f => f?.text().then(t => text.value = t);
