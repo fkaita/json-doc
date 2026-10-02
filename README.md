@@ -143,16 +143,16 @@ To call the API from your own code: `POST /sign` with `{ "domain": "example.com"
 
 **Getting your server trusted**
 
-A server is added to `SERVERS` by pull request if it:
+json-doc only accepts signatures from servers in its trusted list, `SERVERS` in `index.html`. To add your server, open a pull request. It is accepted if the server:
 
 - runs `server/worker.js`, or checks domains with DNS the same way
 - uses an accurate clock
 - keeps its private key secret
 - keeps its log
 
-**If a server's key leaks**
+**If a server's private key leaks**
 
-Add an `until` time to its entry in `SERVERS`:
+Add an `until` time to the server's entry in the trusted list:
 
 ```js
 'sign.json-doc.com': [{ publicKey: 'MCow…', until: '2026-11-05T14:00:00Z' }],
