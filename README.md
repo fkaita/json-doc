@@ -85,7 +85,7 @@ The server's public key is at `/key`. It checks DNS over HTTPS, so answers can't
 
 **Trusted servers**
 
-The `SERVERS` list is empty until the first server is running. A server is added by pull request if it:
+The `SERVERS` list in `index.html` holds the servers json-doc trusts, starting with `sign.json-doc.com`. A server is added by pull request if it:
 
 - runs `server/worker.js`, or checks domains with DNS the same way
 - uses an accurate clock
