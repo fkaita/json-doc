@@ -19,7 +19,7 @@
   small { display: block; font-weight: normal; color: #555; overflow-wrap: anywhere; }
 </style>
 
-<p><input type="file" id="file" accept=".json"> Choose a JSON file, drop it here, or paste it below.</p>
+<p><button id="choose">Choose file</button><input type="file" id="file" accept=".json" hidden> <span id="fileLabel"></span></p>
 <textarea id="text"></textarea>
 <p><button id="go">Open document</button> <span id="error"></span></p>
 
@@ -32,8 +32,8 @@
 <small>Only your domain, your secret and a fingerprint of the document are sent to <span id="signServer"></span>. The document stays on your computer.</small>
 
 <script>
-  const [css, file, text, go, error, signServer, domain, token, newToken, sign, signStatus, download] =
-    ['css', 'file', 'text', 'go', 'error', 'signServer', 'domain', 'token', 'newToken', 'sign', 'signStatus', 'download'].map(id => document.getElementById(id));
+  const [css, choose, file, fileLabel, text, go, error, signServer, domain, token, newToken, sign, signStatus, download] =
+    ['css', 'choose', 'file', 'fileLabel', 'text', 'go', 'error', 'signServer', 'domain', 'token', 'newToken', 'sign', 'signStatus', 'download'].map(id => document.getElementById(id));
   const esc = s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
   const label = k => esc(k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
   const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -141,11 +141,18 @@
     } catch (e) { signStatus.textContent = e.message; }
   };
 
-  // The download is named after the opened file: invoice.json → invoice.signed.json.
-  let fileName = 'document';
-  const load = f => f?.text().then(t => { text.value = t; fileName = f.name.replace(/\.[^.]*$/, '').replace(/\.signed$/i, ''); });
+  // Shows the opened file's name, and names the download after it: invoice.json → invoice.signed.json.
+  let fileName;
+  const setFile = name => {
+    fileName = name ? name.replace(/\.[^.]*$/, '').replace(/\.signed$/i, '') : 'document';
+    fileLabel.textContent = name || 'or drop a JSON file here, or paste it below.';
+  };
+  setFile();
+  const load = f => f?.text().then(t => { text.value = t; setFile(f.name); });
   // Pasting over all the text is a new document; small edits keep the opened file's name.
-  text.onpaste = () => { if (text.selectionStart === 0 && text.selectionEnd === text.value.length) fileName = 'document'; };
+  text.onpaste = () => { if (text.selectionStart === 0 && text.selectionEnd === text.value.length) setFile(); };
+  choose.onclick = () => file.click();
+  // Cleared after each load so choosing the same file again reloads it.
   file.onchange = () => { load(file.files[0]); file.value = ''; };
   ondragover = e => e.preventDefault();
   ondrop = e => { e.preventDefault(); load(e.dataTransfer.files[0]); };
