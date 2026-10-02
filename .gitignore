@@ -1,0 +1,3 @@
+# Signing server secrets and log (see server/server.js)
+server-key.pem
+signed.log
