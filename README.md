@@ -68,12 +68,11 @@ The server is `server/worker.js`.
    ```bash
    node -e 'console.log(require("crypto").generateKeyPairSync("ed25519").privateKey.export({ type: "pkcs8", format: "der" }).toString("base64"))'
    ```
-2. Run it on Cloudflare Workers (HTTPS included). In `server/wrangler.toml`, set your server's name in `SERVER_NAME` and `routes`. Then, in `server/`:
+2. Run it on Cloudflare Workers (HTTPS included). `server/wrangler.toml` is set up for sign.json-doc.com. For your own server, change `SERVER_NAME` and `routes`, and replace the `LOG` id with your own log from `npx wrangler kv namespace create LOG`. Then, in `server/`:
    ```bash
    npx wrangler deploy
    npx wrangler secret put SIGNING_KEY
    ```
-   To keep a log of every signature, create a KV namespace (`npx wrangler kv namespace create LOG`) and add it to `wrangler.toml`.
 
    Or run it anywhere with Node.js 20 or later, behind HTTPS. It logs to `signed.log`.
    ```bash
