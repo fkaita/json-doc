@@ -6,6 +6,19 @@ Open a JSON file and read it like a document. Sign it, and verify who signed it 
 
 Everything runs in your browser. Documents never leave it: signing sends only a hash.
 
+## Quick start
+
+**Read a document:** open https://json-doc.com, choose or drop a JSON file, and click **Open document**.
+
+**Sign a document** (first time):
+
+1. Add the document. Under **Sign this document**, enter your domain and click **Create secret**. Save the secret somewhere safe: anyone who has it can sign as your domain.
+2. Click **Sign**. The page shows a DNS record.
+3. Add that record where you manage your domain's DNS (for example Cloudflare or your domain registrar).
+4. Click **Sign** again, then download the signed document.
+
+Next time, enter your domain and secret and click **Sign**. To stop a secret from working, remove its DNS record.
+
 ## How it works
 
 Pick or drop a `.json` file, or paste JSON, then click **Open document**. The document opens in a new tab, ready to print.
@@ -45,15 +58,7 @@ json-doc checks it with the server's key from the `SERVERS` list in `index.html`
 
 **✓ Signed by northwind.example · 2026-10-01 09:30 UTC** (Confirmed by sign.example.org)
 
-**Sign a document**
-
-1. On the json-doc page, add the document.
-2. Under **Sign this document**, enter your domain and click **Create secret**. Save the secret somewhere safe: anyone who has it can sign as your domain.
-3. Click **Sign**. The first time, the page shows a DNS record to add to your domain. Add it, then click **Sign** again.
-
-The signed document replaces the text and can be downloaded. Only your domain, your secret and a fingerprint of the document are sent to the signing server (`SIGN_SERVER` in `index.html`).
-
-To stop a secret from working, remove its DNS record.
+To sign, see [Quick start](#quick-start). Only your domain, your secret and a fingerprint of the document are sent to the signing server (`SIGN_SERVER` in `index.html`).
 
 **API**
 
