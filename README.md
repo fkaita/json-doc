@@ -23,7 +23,7 @@ First time:
 
 Next time: add the document, enter your domain and secret, and click **Sign**.
 
-To stop a secret from working, remove its DNS record.
+If your secret is lost or leaked, remove its DNS record. Nobody can sign with that secret any more. Documents already signed stay valid.
 
 ## How documents are shown
 
