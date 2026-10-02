@@ -25,6 +25,18 @@ Next time: add the document, enter your domain and secret, and click **Sign**.
 
 If your secret is lost or leaked, remove its DNS record. Nobody can sign with that secret any more. Documents already signed stay valid.
 
+## Repository
+
+| Path | What it is |
+|---|---|
+| `index.html` | The whole app: reads, signs and verifies documents. Served at https://json-doc.com. |
+| `server/worker.js` | The signing server, for Cloudflare Workers. |
+| `server/node.js` | Runs the signing server on Node.js instead. |
+| `server/wrangler.toml` | Cloudflare settings for sign.json-doc.com. |
+| `server/package.json` | Lets Node.js load the server files. |
+| `samples/` | Example documents for each result. |
+| `CNAME` | Tells GitHub Pages to serve the app at json-doc.com. |
+
 ## How documents are shown
 
 **Open document** shows the JSON as a document in a new tab, ready to print:
@@ -165,18 +177,6 @@ The `SERVERS` list in `index.html` holds the servers json-doc trusts, starting w
 Readers can also add servers to their own copy of `index.html`.
 
 If a server's key leaks, its entry gets an `until` time and later documents are rejected. Earlier documents still show ✓, but could be forgeries backdated with the leaked key. The server's log tells them apart.
-
-## Repository
-
-| Path | What it is |
-|---|---|
-| `index.html` | The whole app: reads, signs and verifies documents. Served at https://json-doc.com. |
-| `server/worker.js` | The signing server, for Cloudflare Workers. |
-| `server/node.js` | Runs the signing server on Node.js instead. |
-| `server/wrangler.toml` | Cloudflare settings for sign.json-doc.com. |
-| `server/package.json` | Lets Node.js load the server files. |
-| `samples/` | Example documents for each result. |
-| `CNAME` | Tells GitHub Pages to serve the app at json-doc.com. |
 
 ## License
 
