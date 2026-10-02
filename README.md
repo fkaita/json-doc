@@ -103,7 +103,7 @@ Sign from code with an existing signing server. These steps use sign.json-doc.co
    echo "$SECRET"
    ```
 2. Add a TXT record in your domain's DNS settings:
-   - **Name:** `_json-doc.` followed by your domain, e.g. `_json-doc.example.com`. If your DNS settings add your domain for you, enter the name without it, e.g. just `_json-doc`.
+   - **Name:** `_json-doc.` followed by your domain, e.g. `_json-doc.example.com`.
    - **Value:** your secret's fingerprint, printed by:
      ```bash
      printf %s "$SECRET" | shasum -a 256 | cut -d' ' -f1
