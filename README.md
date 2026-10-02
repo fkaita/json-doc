@@ -70,7 +70,32 @@ To sign, see [Quick start](#quick-start).
 
 **API**
 
-`POST /sign` with `{ "domain": "northwind.example", "token": "<secret>", "hash": "…" }` returns the `signature` object. `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`.
+There is no registration: the server checks the domain's DNS record on every request.
+
+1. Create a secret and keep it safe:
+   ```bash
+   openssl rand -base64 32
+   ```
+2. Load it into your shell without showing it or saving it in history (paste it, then press Enter):
+   ```bash
+   read -rs SECRET && export SECRET
+   ```
+3. Add a TXT record named `_json-doc.example.com` to your domain, with this value (the secret's fingerprint):
+   ```bash
+   printf %s "$SECRET" | shasum -a 256 | cut -d' ' -f1
+   ```
+4. Sign. `POST /sign` with `{ "domain": "example.com", "token": "<secret>", "hash": "…" }` returns the `signature` object, where `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`. With Node.js:
+   ```bash
+   node -e '
+   const doc = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+   const canonical = v => JSON.stringify(v, (_, x) => x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
+   const hash = require("crypto").createHash("sha256").update(canonical(doc)).digest("hex");
+   fetch("https://sign.json-doc.com/sign", { method: "POST", headers: { "content-type": "application/json" },
+     body: JSON.stringify({ domain: process.argv[2], token: process.env.SECRET, hash }) })
+     .then(async r => { const body = await r.json(); if (!r.ok) { console.error(body.error); process.exit(1); }
+       console.log(JSON.stringify({ document: doc, signature: body }, null, 2)); });
+   ' invoice.json example.com > invoice.signed.json
+   ```
 
 `GET /key` returns the server's public key.
 
