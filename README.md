@@ -72,19 +72,17 @@ To sign, see [Quick start](#quick-start).
 
 There is no registration: the server checks the domain's DNS record on every request.
 
-1. Create a secret and keep it safe:
+1. Create a secret. This keeps it in the shell variable `SECRET` for the next steps and prints it once. Save the printed secret somewhere safe.
    ```bash
-   openssl rand -base64 32
+   export SECRET=$(openssl rand -base64 32)
+   echo "$SECRET"
    ```
-2. Load it into your shell without showing it or saving it in history (paste it, then press Enter):
-   ```bash
-   read -rs SECRET && export SECRET
-   ```
-3. Add a TXT record named `_json-doc.example.com` to your domain, with this value (the secret's fingerprint):
+   Later, in a new terminal, run `read -rs SECRET && export SECRET`, paste your saved secret and press Enter. Nothing is shown while you paste.
+2. Add a TXT record named `_json-doc.example.com` to your domain, with this value (the secret's fingerprint):
    ```bash
    printf %s "$SECRET" | shasum -a 256 | cut -d' ' -f1
    ```
-4. Sign. `POST /sign` with `{ "domain": "example.com", "token": "<secret>", "hash": "…" }` returns the `signature` object, where `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`. With Node.js:
+3. Sign. `POST /sign` with `{ "domain": "example.com", "token": "<secret>", "hash": "…" }` returns the `signature` object, where `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`. With Node.js:
    ```bash
    node -e '
    const doc = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
