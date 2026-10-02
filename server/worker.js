@@ -25,7 +25,8 @@ async function serverKeys(env) {
   return keys;
 }
 
-// DNS over HTTPS, so answers can't be faked on the network between this server and the resolver.
+// DNS over HTTPS through Cloudflare's public resolver (works from any host), so answers can't be faked
+// on the network between this server and the resolver.
 async function dnsTxt(name) {
   const res = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=TXT`, { headers: { accept: 'application/dns-json' } });
   const { Answer = [] } = await res.json();
