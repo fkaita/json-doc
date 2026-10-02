@@ -38,7 +38,7 @@ If your secret is lost or leaked, remove its DNS record. Nobody can sign with th
 
 If the document is signed, a banner above it shows the result:
 
-- **Green ✓ Signed by example.com** — a [trusted](#trusted-servers) signing server confirms who signed it and when, and the document is unchanged.
+- **Green ✓ Signed by example.com** — a [trusted](#how-signing-works) signing server confirms who signed it and when, and the document is unchanged.
 - **Amber ⚠ Signer not confirmed** — the document is unchanged since it was signed, but nobody confirms who signed it (self-signed). Ask the signer if the key shown is theirs.
 - **Red ✗** — the document or signature was changed, is missing, or comes from a server json-doc does not trust.
 - **No banner** — not a signed file.
@@ -63,7 +63,7 @@ Signature checks need a recent browser and a secure page: https://json-doc.com, 
 | `samples/` | Example documents for each result. |
 | `CNAME` | Tells GitHub Pages to serve the app at json-doc.com. |
 
-### File format
+### How signing works
 
 A signed file has exactly two top-level fields, `document` and `signature`. Any other top-level field makes it a plain file.
 
@@ -78,7 +78,7 @@ The signature covers `document` in canonical JSON ([RFC 8785](https://www.rfc-ed
 }
 ```
 
-json-doc checks it with the server's key from the `SERVERS` list in `index.html`, never from the file.
+json-doc only trusts servers in the `SERVERS` list in `index.html`, starting with `sign.json-doc.com`, and checks the signature with the key from that list, never from the file. Readers can add servers to their own copy of `index.html`.
 
 **Self-signed** (⚠): the signer uses their own key and includes it in the file. No server is needed.
 
@@ -95,7 +95,7 @@ To make one:
 2. Sign that text (UTF-8) with an Ed25519 private key.
 3. Put the signature in `signature.value` and the public key in `signature.publicKey`, both as standard base64 with padding. Any edit to their text, even removing `=`, makes the signature fail.
 
-### Sign with the API
+### Sign without the page (API)
 
 There is no registration: the server checks the domain's DNS record on every request.
 
@@ -123,7 +123,7 @@ There is no registration: the server checks the domain's DNS record on every req
 
 To call the API from your own code: `POST /sign` with `{ "domain": "example.com", "token": "<secret>", "hash": "…" }` returns the `signature` object, where `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`. `GET /key` returns the server's public key.
 
-### Run your own signing server
+### Run a signing server
 
 1. Create the server's private key. Keep it secret.
    ```bash
@@ -141,18 +141,18 @@ To call the API from your own code: `POST /sign` with `{ "domain": "example.com"
      ```
 3. To sign with it from your copy of json-doc, set `SIGN_SERVER` in `index.html`.
 
-### Trusted servers
+**Getting your server trusted**
 
-The `SERVERS` list in `index.html` holds the servers json-doc trusts, starting with `sign.json-doc.com`. A server is added by pull request if it:
+A server is added to `SERVERS` by pull request if it:
 
 - runs `server/worker.js`, or checks domains with DNS the same way
 - uses an accurate clock
 - keeps its private key secret
 - keeps its log
 
-Readers can also add servers to their own copy of `index.html`.
+**If a server's key leaks**
 
-If a server's key leaks, add an `until` time to its entry in `SERVERS`:
+Add an `until` time to its entry in `SERVERS`:
 
 ```js
 'sign.json-doc.com': [{ publicKey: 'MCow…', until: '2026-11-05T14:00:00Z' }],
