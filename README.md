@@ -10,6 +10,8 @@ Everything runs in your browser. Documents never leave it: signing sends only a 
 
 **Read a document:** open https://json-doc.com, choose or drop a JSON file, and click **Open document**.
 
+Try it with the files in [`samples/`](samples/): `invoice.json` (plain), `invoice.signed.json` (✓), `invoice.self-signed.json` (⚠) and `invoice.tampered.json` (✗).
+
 **Sign a document**
 
 First time:
@@ -124,7 +126,7 @@ json-doc shows **⚠ Signer not confirmed** with the key. This proves the docume
 2. Sign that text (UTF-8) with an Ed25519 private key.
 3. Put the signature in `signature.value` and the public key in `signature.publicKey`, both as standard base64 with padding. Any edit to their text, even removing `=`, makes the signature fail.
 
-To verify outside the browser (Node.js, no dependencies), replace `signed.json` with your file:
+To verify outside the browser (Node.js, no dependencies), from the repository folder (replace the file name with your own):
 
 ```bash
 node -e '
@@ -134,7 +136,7 @@ const bytes = t => { const b = Buffer.from(t, "base64"); if (b.toString("base64"
 let ok = false;
 try { ok = c.verify(null, Buffer.from(canonical(f.document)), c.createPublicKey({ key: bytes(s.publicKey), format: "der", type: "spki" }), bytes(s.value)); } catch {}
 console.log(ok ? "valid" : "INVALID");
-' signed.json
+' samples/invoice.self-signed.json
 ```
 
 Signature checks need a recent browser and a secure page: the hosted version, or `index.html` opened from your own computer.
@@ -145,6 +147,18 @@ Signature checks need a recent browser and a secure page: the hosted version, or
 - **Whether the content is true.** A signature shows who sent the document and that it is unchanged, not that what it says is correct.
 - **Screenshots, printouts and copies of the result page.** Anyone can make a page or PDF that looks like a green ✓. Only trust a result you see after opening the file yourself in json-doc.
 - **Backdated forgeries made with a leaked server key.** See Trusted servers above.
+
+## Repository
+
+| Path | What it is |
+|---|---|
+| `index.html` | The whole app: reads, signs and verifies documents. Served at https://json-doc.com. |
+| `server/worker.js` | The signing server, for Cloudflare Workers. |
+| `server/node.js` | Runs the signing server on Node.js instead. |
+| `server/wrangler.toml` | Cloudflare settings for sign.json-doc.com. |
+| `server/package.json` | Lets Node.js load the server files. |
+| `samples/` | Example documents for each result. |
+| `CNAME` | Tells GitHub Pages to serve the app at json-doc.com. |
 
 ## License
 
