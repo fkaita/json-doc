@@ -123,22 +123,9 @@ json-doc shows **⚠ Signer not confirmed** with the key. The document is unchan
 
 **Signing**
 
-1. Turn `document` into canonical JSON. In JavaScript that is `JSON.stringify` with sorted keys, as in the code below.
+1. Turn `document` into canonical JSON (keys sorted, no whitespace).
 2. Sign that text (UTF-8) with an Ed25519 private key.
 3. Put the signature in `signature.value` and the public key in `signature.publicKey`, both as standard base64 with padding. Any edit to their text, even removing `=`, makes the signature fail.
-
-To verify outside the browser, run this with Node.js in the repository folder (replace the file name with yours):
-
-```bash
-node -e '
-const c = require("crypto"), f = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")), s = f.signature;
-const canonical = v => JSON.stringify(v, (_, x) => x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
-const bytes = t => { const b = Buffer.from(t, "base64"); if (b.toString("base64") !== t) throw Error("Invalid base64"); return b; };
-let ok = false;
-try { ok = c.verify(null, Buffer.from(canonical(f.document)), c.createPublicKey({ key: bytes(s.publicKey), format: "der", type: "spki" }), bytes(s.value)); } catch {}
-console.log(ok ? "valid" : "INVALID");
-' samples/invoice.self-signed.json
-```
 
 ## What json-doc does not check
 
