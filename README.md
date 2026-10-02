@@ -81,7 +81,7 @@ There is no registration: the server checks the domain's DNS record on every req
    ```bash
    printf %s "$SECRET" | shasum -a 256 | cut -d' ' -f1
    ```
-3. Sign. `POST /sign` with `{ "domain": "example.com", "token": "<secret>", "hash": "…" }` returns the `signature` object, where `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`. With Node.js:
+3. Sign. This Node.js command reads `invoice.json`, sends its fingerprint with your domain and secret to sign.json-doc.com, and saves the signed document as `invoice.signed.json`. Replace `invoice.json` and `example.com` with your own.
    ```bash
    node -e '
    const doc = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
@@ -94,7 +94,7 @@ There is no registration: the server checks the domain's DNS record on every req
    ' invoice.json example.com > invoice.signed.json
    ```
 
-`GET /key` returns the server's public key.
+To call the API from your own code: `POST /sign` with `{ "domain": "example.com", "token": "<secret>", "hash": "…" }` returns the `signature` object, where `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`. `GET /key` returns the server's public key.
 
 **Run a signing server**
 
