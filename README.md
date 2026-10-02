@@ -2,7 +2,7 @@
 
 Open a JSON file and read it like a document. Sign it, and verify who signed it and when. One HTML file, no dependencies, no build step.
 
-**Use it:** https://fkaita.github.io/json-doc/ — or download `index.html` and open it in a browser.
+**Use it:** https://json-doc.com — or download `index.html` and open it in a browser.
 
 Everything runs in your browser. Documents never leave it: signing sends only a hash.
 
