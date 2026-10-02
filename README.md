@@ -44,19 +44,19 @@ json-doc checks it with the server's key from the `SERVERS` list in `index.html`
 
 **✓ Signed by northwind.example · 2026-10-01 09:30 UTC** (via sign.example.org)
 
-**Sign a document** (Node.js 18 or later)
+**Sign a document**
 
-1. Create a secret token. Keep it private.
-   ```bash
-   node -e 'console.log(require("crypto").randomBytes(32).toString("base64url"))'
-   ```
-2. Sign:
-   ```bash
-   JSON_DOC_TOKEN=<token> node server/sign.js https://sign.example.org northwind.example invoice.json > signed.json
-   ```
-   The first time, it prints the DNS record to add, for example `_json-doc.northwind.example TXT 9edf…`. Add it, then run the command again.
+1. Open the signing server's page, for example https://sign.json-doc.com.
+2. Add the document, enter your domain, and click **New token**. Keep the token secret.
+3. Click **Sign**. The first time, it shows the DNS record to add, for example `_json-doc.northwind.example TXT 9edf…`. Add it, then click **Sign** again and download the signed file.
 
 To stop a token from signing, remove its DNS record.
+
+**API**
+
+`POST /sign` with `{ "domain": "northwind.example", "token": "…", "hash": "…" }` returns the `signature` object. `hash` is the hex SHA-256 of the canonical `document` (see below). The signed file is `{ "document": …, "signature": … }`.
+
+`GET /key` returns the server's public key.
 
 **Run a signing server**
 
