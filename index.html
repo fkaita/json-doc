@@ -87,7 +87,7 @@
         }
       // Self-signed: the key is in the file, so this proves the document is unchanged, not who signed it.
       } else if (await ed25519(s.publicKey, s.value, utf8(canonical(doc)))) {
-        return ['warn', `⚠ Signer not confirmed<small>The document is unchanged since it was signed, but anyone can make this kind of signature. Key: ${esc(s.publicKey)}</small>`];
+        return ['warn', `⚠ Signer not confirmed<small>The document is unchanged since it was signed. Ask the signer if this key is theirs: ${esc(s.publicKey)}</small>`];
       }
     } catch {}
     return ['bad', '✗ Signature not valid'];

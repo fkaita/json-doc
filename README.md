@@ -22,7 +22,7 @@ Pick or drop a `.json` file, or paste JSON, then click **Open document**. The do
 A signed file has exactly two top-level fields, `document` and `signature`. json-doc checks the signature and shows the result above the document:
 
 - **Green ✓ Signed by example.com** — a trusted signing server confirms who signed it and when, and the document is unchanged.
-- **Amber ⚠ Signer not confirmed** — the document is unchanged since it was signed, but nobody confirms who signed it (self-signed).
+- **Amber ⚠ Signer not confirmed** — the document is unchanged since it was signed, but nobody confirms who signed it (self-signed). Ask the signer if the key shown is theirs.
 - **Red ✗** — the document or signature was changed, is missing, or comes from a server json-doc does not trust.
 - **No banner** — not a signed file (for example, it has other top-level fields).
 
