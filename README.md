@@ -95,7 +95,7 @@ To make one:
 2. Sign that text (UTF-8) with an Ed25519 private key.
 3. Put the signature in `signature.value` and the public key in `signature.publicKey`, both as standard base64 with padding. Any edit to their text, even removing `=`, makes the signature fail.
 
-### Sign without the page (API)
+### Sign from code
 
 There is no registration: the server checks the domain's DNS record on every request.
 
