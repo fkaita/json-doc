@@ -1,10 +1,10 @@
 # json-doc
 
-Open a JSON file, read it like a document, and verify its signature. One HTML file, no dependencies, no build step.
+Open a JSON file and read it like a document. Sign it, and verify who signed it and when. One HTML file, no dependencies, no build step.
 
 **Use it:** https://fkaita.github.io/json-doc/ — or download `index.html` and open it in a browser.
 
-Everything runs in your browser. Your data is never uploaded.
+Everything runs in your browser. Documents never leave it: signing sends only a hash.
 
 ## How it works
 
@@ -62,14 +62,16 @@ To stop a token from signing, remove its DNS record.
 
 **Run a signing server**
 
+The server is `server/worker.js`.
+
 1. Create the server's private key. Keep it secret.
    ```bash
    node -e 'console.log(require("crypto").generateKeyPairSync("ed25519").privateKey.export({ type: "pkcs8", format: "der" }).toString("base64"))'
    ```
-2. Run it on Cloudflare Workers (HTTPS included). In `server/`, set `SERVER_NAME` in `wrangler.toml`, then:
+2. Run it on Cloudflare Workers (HTTPS included). In `server/wrangler.toml`, set your server's name in `SERVER_NAME` and `routes`. Then, in `server/`:
    ```bash
-   npx wrangler secret put SIGNING_KEY
    npx wrangler deploy
+   npx wrangler secret put SIGNING_KEY
    ```
    To keep a log of every signature, create a KV namespace (`npx wrangler kv namespace create LOG`) and add it to `wrangler.toml`.
 
@@ -77,6 +79,7 @@ To stop a token from signing, remove its DNS record.
    ```bash
    SERVER_NAME=sign.example.org SIGNING_KEY=<key> node server/node.js
    ```
+3. To sign with it from your copy of json-doc, set `SIGN_SERVER` in `index.html`.
 
 The server's public key is at `/key`. It checks DNS over HTTPS, so answers can't be faked on the network.
 

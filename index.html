@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JSON Reader</title>
+<title>json-doc</title>
 <style id="css">
   body { font: 14px/1.4 system-ui, sans-serif; max-width: 760px; margin: auto; padding: 16px; }
   textarea { width: 100%; height: 60vh; box-sizing: border-box; }
@@ -36,6 +36,8 @@
   const label = k => esc(k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
   const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
   const isPrim = v => v == null || typeof v !== 'object';
+  // Signed file: { document, signature } at the top level, nothing else.
+  const isSigned = v => isObj(v) && 'document' in v && Object.keys(v).every(k => k === 'document' || k === 'signature');
 
   function render(v) {
     if (isPrim(v)) return v == null ? '—' : esc(v);
@@ -93,13 +95,12 @@
     let data, status = '';
     try { data = JSON.parse(text.value); error.textContent = ''; } catch (e) { return error.textContent = e.message; }
     const w = window.open('');
-    // Signed file: { document, signature } at the top level, nothing else.
-    if (isObj(data) && 'document' in data && Object.keys(data).every(k => k === 'document' || k === 'signature')) {
+    if (isSigned(data)) {
       const [cls, message] = await check(data);
       status = `<p class="${cls}">${message}</p>`;
       data = data.document;
     }
-    w.document.write(`<!doctype html><meta charset="utf-8"><title>JSON Reader</title><style>${css.textContent}</style>${status}${render(data)}`);
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>json-doc</title><style>${css.textContent}</style>${status}${render(data)}`);
     w.document.close();
   };
 
@@ -114,13 +115,13 @@
     signStatus.textContent = 'Signing…';
     try {
       let doc = JSON.parse(text.value);
-      if (isObj(doc) && 'document' in doc && 'signature' in doc) doc = doc.document;
+      if (isSigned(doc)) doc = doc.document;
       const res = await fetch(SIGN_SERVER + '/sign', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ domain: domain.value.trim().toLowerCase(), token: token.value, hash: await sha256(canonical(doc)) })
       });
-      const body = await res.json();
-      if (!res.ok) throw Error(body.error);
+      const body = await res.json().catch(() => ({ error: `Signing server error (${res.status})` }));
+      if (!res.ok || body.error) throw Error(body.error);
       text.value = JSON.stringify({ document: doc, signature: body }, null, 2);
       download.href = URL.createObjectURL(new Blob([text.value], { type: 'application/json' }));
       download.hidden = false;
