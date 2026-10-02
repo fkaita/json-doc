@@ -93,9 +93,9 @@ To make one:
 2. Sign that text (UTF-8) with an Ed25519 private key.
 3. Put the signature in `signature.value` and the public key in `signature.publicKey`, both as standard base64 with padding. Any edit to their text, even removing `=`, makes the signature fail.
 
-## Sign from code
+## Use a signing server
 
-There is no registration: the server checks the domain's DNS record on every request.
+Sign from code with an existing signing server. These steps use sign.json-doc.com; to use another server, replace its address in step 3. There is no registration: the server checks the domain's DNS record on every request.
 
 1. Create a secret. This keeps it in the shell variable `SECRET` for the next steps and prints it once. Save the printed secret somewhere safe.
    ```bash
@@ -121,7 +121,7 @@ There is no registration: the server checks the domain's DNS record on every req
 
 To call the API from your own code: `POST /sign` with `{ "domain": "example.com", "token": "<secret>", "hash": "…" }` returns the `signature` object, where `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`. `GET /key` returns the server's public key.
 
-## Run a signing server
+## Host your own signing server
 
 1. Create the server's private key. Keep it secret.
    ```bash
