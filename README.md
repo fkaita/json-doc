@@ -21,9 +21,10 @@ Pick or drop a `.json` file, or paste JSON, then click **Open document**. The do
 
 A signed file has exactly two top-level fields, `document` and `signature`. json-doc checks the signature and shows the result above the document:
 
-- **Green ✓** — the signature is valid.
+- **Green ✓ Signed by example.com** — a trusted signing server confirms who signed it and when, and the document is unchanged.
+- **Amber ⚠ Signer not confirmed** — the document is unchanged since it was signed, but nobody confirms who signed it (self-signed). Ask the signer if the key shown is theirs.
 - **Red ✗** — the document or signature was changed, is missing, or comes from a server json-doc does not trust.
-- **No banner** — not a signed file (for example, it has other top-level fields). Only trust a green ✓.
+- **No banner** — not a signed file (for example, it has other top-level fields).
 
 Changing any value, value type (`40` vs `"40"`) or array order breaks the signature. Key order and whitespace do not.
 
@@ -42,21 +43,21 @@ A signing server confirms which domain signed the document, and when. Only the d
 
 json-doc checks it with the server's key from the `SERVERS` list in `index.html`, never from the file, and shows:
 
-**✓ Signed by northwind.example · 2026-10-01 09:30 UTC** (via sign.example.org)
+**✓ Signed by northwind.example · 2026-10-01 09:30 UTC** (Confirmed by sign.example.org)
 
 **Sign a document**
 
-1. On the json-doc page, add the document and open **Sign this document**.
-2. Enter your domain and click **New token**. Keep the token secret.
-3. Click **Sign**. The first time, it shows the DNS record to add, for example `_json-doc.northwind.example TXT 9edf…`. Add it, then click **Sign** again.
+1. On the json-doc page, add the document.
+2. Under **Sign this document**, enter your domain and click **Create secret**. Save the secret somewhere safe: anyone who has it can sign as your domain.
+3. Click **Sign**. The first time, the page shows a DNS record to add to your domain. Add it, then click **Sign** again.
 
-The signed file replaces the text and can be downloaded. Only your domain, token and the document's hash are sent to the signing server (`SIGN_SERVER` in `index.html`).
+The signed document replaces the text and can be downloaded. Only your domain, your secret and a fingerprint of the document are sent to the signing server (`SIGN_SERVER` in `index.html`).
 
-To stop a token from signing, remove its DNS record.
+To stop a secret from working, remove its DNS record.
 
 **API**
 
-`POST /sign` with `{ "domain": "northwind.example", "token": "…", "hash": "…" }` returns the `signature` object. `hash` is the hex SHA-256 of the canonical `document` (see below). The signed file is `{ "document": …, "signature": … }`.
+`POST /sign` with `{ "domain": "northwind.example", "token": "<secret>", "hash": "…" }` returns the `signature` object. `hash` is the hex SHA-256 of the canonical `document` (see below). The signed file is `{ "document": …, "signature": … }`.
 
 `GET /key` returns the server's public key.
 
@@ -106,7 +107,7 @@ The signer uses their own key and includes it in the file. No server is needed.
 }
 ```
 
-json-doc shows **✓ Signature valid** with the key. This proves the document is unchanged since that key signed it, not who owns the key: anyone can edit a document and re-sign it with a new key. Compare the key with one you got from the signer.
+json-doc shows **⚠ Signer not confirmed** with the key. This proves the document is unchanged since that key signed it, not who owns the key: anyone can edit a document and re-sign it with a new key. Compare the key with one you got from the signer.
 
 **Signing**
 
@@ -128,6 +129,13 @@ console.log(ok ? "valid" : "INVALID");
 ```
 
 Signature checks need a recent browser and a secure page: the hosted version, or `index.html` opened from your own computer.
+
+## What json-doc does not check
+
+- **Legal identity.** ✓ Signed by example.com means whoever controls example.com signed it, not who the company or person is.
+- **Whether the content is true.** A signature shows who sent the document and that it is unchanged, not that what it says is correct.
+- **Screenshots, printouts and copies of the result page.** Anyone can make a page or PDF that looks like a green ✓. Only trust a result you see after opening the file yourself in json-doc.
+- **Backdated forgeries made with a leaked server key.** See Trusted servers above.
 
 ## License
 
