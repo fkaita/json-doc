@@ -10,14 +10,18 @@ Everything runs in your browser. Documents never leave it: signing sends only a 
 
 **Read a document:** open https://json-doc.com, choose or drop a JSON file, and click **Open document**.
 
-**Sign a document** (first time):
+**Sign a document**
+
+First time:
 
 1. Add the document. Under **Sign this document**, enter your domain and click **Create secret**. Save the secret somewhere safe: anyone who has it can sign as your domain.
 2. Click **Sign**. The page shows a DNS record.
-3. Add that record where you manage your domain's DNS (for example Cloudflare or your domain registrar).
+3. Add that record where you manage your domain's DNS.
 4. Click **Sign** again, then download the signed document.
 
-Next time, enter your domain and secret and click **Sign**. To stop a secret from working, remove its DNS record.
+Next time: add the document, enter your domain and secret, and click **Sign**.
+
+To stop a secret from working, remove its DNS record.
 
 ## How it works
 
