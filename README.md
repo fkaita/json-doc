@@ -25,7 +25,33 @@ Next time: add the document, enter your domain and secret, and click **Sign**.
 
 If your secret is lost or leaked, remove its DNS record. Nobody can sign with that secret any more. Documents already signed stay valid.
 
-## Repository
+## Reading the result
+
+**Open document** shows the JSON as a document in a new tab, ready to print:
+
+- Plain values → label and value, laid out in a compact grid
+- Objects → indented sections
+- Lists of values → bullet lists
+- Lists of objects → tables
+- Keys like `invoice_number` or `invoiceNumber` → "Invoice Number"
+- `null` or a missing table cell → —
+
+If the document is signed, a banner above it shows the result:
+
+- **Green ✓ Signed by example.com** — a trusted signing server confirms who signed it and when, and the document is unchanged.
+- **Amber ⚠ Signer not confirmed** — the document is unchanged since it was signed, but nobody confirms who signed it (self-signed). Ask the signer if the key shown is theirs.
+- **Red ✗** — the document or signature was changed, is missing, or comes from a server json-doc does not trust.
+- **No banner** — not a signed file.
+
+Changing any value in a signed document breaks its signature.
+
+**✓ Signed by example.com** means whoever controls example.com signed this document at the time shown, and it hasn't changed since. Only trust a ✓ you see after opening the file yourself in json-doc: a screenshot or printout can be faked.
+
+Signature checks need a recent browser and a secure page: https://json-doc.com, or `index.html` opened from your own computer.
+
+## For developers
+
+### Repository
 
 | Path | What it is |
 |---|---|
@@ -37,35 +63,13 @@ If your secret is lost or leaked, remove its DNS record. Nobody can sign with th
 | `samples/` | Example documents for each result. |
 | `CNAME` | Tells GitHub Pages to serve the app at json-doc.com. |
 
-## How documents are shown
+### File format
 
-**Open document** shows the JSON as a document in a new tab, ready to print:
-
-- Plain values → label and value, laid out in a compact grid
-- Objects → indented sections
-- Lists of values → bullet lists
-- Lists of objects → tables
-- Keys like `invoice_number` or `invoiceNumber` → "Invoice Number"
-- `null` or a missing table cell → —
-
-## Signed documents
-
-A signed file has exactly two top-level fields, `document` and `signature`. json-doc checks the signature and shows the result above the document:
-
-- **Green ✓ Signed by example.com** — a trusted signing server confirms who signed it and when, and the document is unchanged.
-- **Amber ⚠ Signer not confirmed** — the document is unchanged since it was signed, but nobody confirms who signed it (self-signed). Ask the signer if the key shown is theirs.
-- **Red ✗** — the document or signature was changed, is missing, or comes from a server json-doc does not trust.
-- **No banner** — not a signed file (for example, it has other top-level fields).
+A signed file has exactly two top-level fields, `document` and `signature`. Any other top-level field makes it a plain file.
 
 The signature covers `document` in canonical JSON ([RFC 8785](https://www.rfc-editor.org/rfc/rfc8785)): keys sorted, no whitespace. So key order and whitespace don't matter, but changing any value, value type (`40` vs `"40"`) or array order breaks the signature.
 
-Signature checks need a recent browser and a secure page: https://json-doc.com, or `index.html` opened from your own computer.
-
-There are two kinds of signature.
-
-### Server-signed: who signed, and when
-
-A signing server confirms which domain signed the document, and when.
+**Server-signed** (✓): a signing server confirms which domain signed the document, and when.
 
 ```json
 {
@@ -74,13 +78,24 @@ A signing server confirms which domain signed the document, and when.
 }
 ```
 
-json-doc checks it with the server's key from the `SERVERS` list in `index.html`, never from the file, and shows:
+json-doc checks it with the server's key from the `SERVERS` list in `index.html`, never from the file.
 
-**✓ Signed by northwind.example · 2026-10-01 09:30 UTC** (Confirmed by sign.example.org)
+**Self-signed** (⚠): the signer uses their own key and includes it in the file. No server is needed.
 
-To sign, see [Quick start](#quick-start).
+```json
+{
+  "document": { "...": "the content that was signed" },
+  "signature": { "publicKey": "base64 Ed25519 public key (SPKI)", "value": "base64 Ed25519 signature" }
+}
+```
 
-**API**
+To make one:
+
+1. Turn `document` into canonical JSON.
+2. Sign that text (UTF-8) with an Ed25519 private key.
+3. Put the signature in `signature.value` and the public key in `signature.publicKey`, both as standard base64 with padding. Any edit to their text, even removing `=`, makes the signature fail.
+
+### Sign with the API
 
 There is no registration: the server checks the domain's DNS record on every request.
 
@@ -108,33 +123,7 @@ There is no registration: the server checks the domain's DNS record on every req
 
 To call the API from your own code: `POST /sign` with `{ "domain": "example.com", "token": "<secret>", "hash": "…" }` returns the `signature` object, where `hash` is the hex SHA-256 of the canonical `document`. The signed file is `{ "document": …, "signature": … }`. `GET /key` returns the server's public key.
 
-### Self-signed: unchanged only
-
-The signer uses their own key and includes it in the file. No server is needed.
-
-```json
-{
-  "document": { "...": "the content that was signed" },
-  "signature": { "publicKey": "base64 Ed25519 public key (SPKI)", "value": "base64 Ed25519 signature" }
-}
-```
-
-json-doc shows **⚠ Signer not confirmed** with the key. The document is unchanged since that key signed it, but anyone can make a key, so ask the signer if it is theirs.
-
-**Signing**
-
-1. Turn `document` into canonical JSON (keys sorted, no whitespace).
-2. Sign that text (UTF-8) with an Ed25519 private key.
-3. Put the signature in `signature.value` and the public key in `signature.publicKey`, both as standard base64 with padding. Any edit to their text, even removing `=`, makes the signature fail.
-
-## What json-doc does not check
-
-- **Legal identity.** ✓ Signed by example.com means whoever controls example.com signed it, not who the company or person is.
-- **Whether the content is true.** A signature shows who sent the document and that it is unchanged, not that what it says is correct.
-- **Screenshots, printouts and copies of the result page.** Anyone can make a page or PDF that looks like a green ✓. Only trust a result you see after opening the file yourself in json-doc.
-- **Backdated forgeries made with a leaked server key.** See [Trusted servers](#run-your-own-signing-server) below.
-
-## Run your own signing server
+### Run your own signing server
 
 1. Create the server's private key. Keep it secret.
    ```bash
