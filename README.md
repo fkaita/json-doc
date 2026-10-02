@@ -46,17 +46,17 @@ json-doc checks it with the server's key from the `SERVERS` list in `index.html`
 
 **Sign a document**
 
-1. On the json-doc page, add the document and open **Sign this document**.
-2. Enter your domain and click **New token**. Keep the token secret.
-3. Click **Sign**. The first time, it shows the DNS record to add, for example `_json-doc.northwind.example TXT 9edf…`. Add it, then click **Sign** again.
+1. On the json-doc page, add the document.
+2. Under **Sign this document**, enter your domain and click **Create secret**. Save the secret somewhere safe: anyone who has it can sign as your domain.
+3. Click **Sign**. The first time, the page shows a DNS record to add to your domain. Add it, then click **Sign** again.
 
-The signed file replaces the text and can be downloaded. Only your domain, token and the document's hash are sent to the signing server (`SIGN_SERVER` in `index.html`).
+The signed document replaces the text and can be downloaded. Only your domain, your secret and a fingerprint of the document are sent to the signing server (`SIGN_SERVER` in `index.html`).
 
-To stop a token from signing, remove its DNS record.
+To stop a secret from working, remove its DNS record.
 
 **API**
 
-`POST /sign` with `{ "domain": "northwind.example", "token": "…", "hash": "…" }` returns the `signature` object. `hash` is the hex SHA-256 of the canonical `document` (see below). The signed file is `{ "document": …, "signature": … }`.
+`POST /sign` with `{ "domain": "northwind.example", "token": "<secret>", "hash": "…" }` returns the `signature` object. `hash` is the hex SHA-256 of the canonical `document` (see below). The signed file is `{ "document": …, "signature": … }`.
 
 `GET /key` returns the server's public key.
 

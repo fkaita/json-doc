@@ -18,16 +18,17 @@
   small { display: block; font-weight: normal; color: #555; overflow-wrap: anywhere; }
 </style>
 
-<p><input type="file" id="file" accept=".json"> or drop a file anywhere, or paste JSON below.</p>
+<p><input type="file" id="file" accept=".json"> Choose a JSON file, drop it here, or paste it below.</p>
 <textarea id="text"></textarea>
 <p><button id="go">Open document</button> <span id="error"></span></p>
-<details>
-  <summary>Sign this document</summary>
-  <p>Sends your domain, your token and the document's hash to <span id="signServer"></span>. The document stays in your browser.</p>
-  <p><input id="domain" placeholder="Domain, e.g. example.com"> <input id="token" type="password" placeholder="Token" autocomplete="off">
-    <button id="newToken">New token</button> <button id="sign">Sign</button></p>
-  <p><span id="signStatus"></span> <a id="download" download="signed.json" hidden>Download signed.json</a></p>
-</details>
+
+<h3>Sign this document</h3>
+<p>Your domain <input id="domain" placeholder="example.com"></p>
+<p>Your secret <input id="token" type="password" autocomplete="off"> <button id="newToken">Create secret</button></p>
+<p><button id="sign">Sign</button></p>
+<p id="signStatus"></p>
+<p><a id="download" download="signed.json" hidden>Download signed document</a></p>
+<small>Only your domain, your secret and a fingerprint of the document are sent to <span id="signServer"></span>. The document stays on your computer.</small>
 
 <script>
   const [css, file, text, go, error, signServer, domain, token, newToken, sign, signStatus, download] =
@@ -94,7 +95,7 @@
   // Opens the document in a new tab, built locally in the browser.
   go.onclick = async () => {
     let data, status = '';
-    try { data = JSON.parse(text.value); error.textContent = ''; } catch (e) { return error.textContent = e.message; }
+    try { data = JSON.parse(text.value); error.textContent = ''; } catch (e) { return error.textContent = 'This is not valid JSON: ' + e.message; }
     const w = window.open('');
     if (isSigned(data)) {
       const [cls, message] = await check(data);
@@ -105,28 +106,36 @@
     w.document.close();
   };
 
-  // Signing: only the domain, the token and the document's hash are sent to SIGN_SERVER.
+  // Signing: only the domain, the secret and the document's hash are sent to SIGN_SERVER.
   signServer.textContent = new URL(SIGN_SERVER).host;
   newToken.onclick = () => {
     token.type = 'text';
     token.value = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/[+/=]/g, c => ({ '+': '-', '/': '_', '=': '' })[c]);
+    signStatus.textContent = 'Save this secret somewhere safe. Anyone who has it can sign as your domain.';
   };
   sign.onclick = async () => {
     download.hidden = true;
+    const name = domain.value.trim().toLowerCase();
+    if (!/^([a-z0-9-]+\.)+[a-z]{2,}$/.test(name)) return signStatus.textContent = 'Enter your domain, like example.com.';
+    if (!token.value) return signStatus.textContent = 'Enter your secret, or click Create secret.';
     signStatus.textContent = 'Signing…';
     try {
-      let doc = JSON.parse(text.value);
+      let doc;
+      try { doc = JSON.parse(text.value); } catch (e) { throw Error('This is not valid JSON: ' + e.message); }
       if (isSigned(doc)) doc = doc.document;
       const res = await fetch(SIGN_SERVER + '/sign', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ domain: domain.value.trim().toLowerCase(), token: token.value, hash: await sha256(canonical(doc)) })
+        body: JSON.stringify({ domain: name, token: token.value, hash: await sha256(canonical(doc)) })
       });
+      // 403: the domain's DNS doesn't list this secret yet. The record holds the secret's fingerprint, not the secret.
+      if (res.status === 403) return signStatus.innerHTML = `To prove you own ${esc(name)}, add this record in your domain's DNS settings, then click Sign again.` +
+        `<small>Type: TXT<br>Name: _json-doc.${esc(name)}<br>Value: ${await sha256(token.value)}</small>`;
       const body = await res.json().catch(() => ({ error: `Signing server error (${res.status})` }));
       if (!res.ok || body.error) throw Error(body.error);
       text.value = JSON.stringify({ document: doc, signature: body }, null, 2);
       download.href = URL.createObjectURL(new Blob([text.value], { type: 'application/json' }));
       download.hidden = false;
-      signStatus.textContent = 'Signed. Click Open document to check it.';
+      signStatus.textContent = 'Signed. Click Open document to see it.';
     } catch (e) { signStatus.textContent = e.message; }
   };
 
