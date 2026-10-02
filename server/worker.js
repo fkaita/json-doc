@@ -48,6 +48,22 @@ async function sign(env, { domain, token, hash }) {
   return { server: env.SERVER_NAME, domain, time: payload.time, value };
 }
 
+// Reads a JSON object body, stopping as soon as it passes 10 KB so large requests can't fill memory.
+async function readJson(request) {
+  const tooLarge = () => fail(413, 'Request too large');
+  if (Number(request.headers.get('content-length')) > 10000) throw tooLarge();
+  let text = '';
+  const reader = request.body?.getReader(), decoder = new TextDecoder();
+  for (let chunk; reader && !(chunk = await reader.read()).done;) {
+    text += decoder.decode(chunk.value, { stream: true });
+    if (text.length > 10000) { reader.cancel(); throw tooLarge(); }
+  }
+  let body;
+  try { body = JSON.parse(text); } catch {}
+  if (!isObj(body)) throw fail(400, 'Body must be a JSON object');
+  return body;
+}
+
 const json = (status, body) => new Response(status === 204 ? null : JSON.stringify(body), {
   status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'access-control-allow-headers': 'content-type' }
 });
@@ -58,14 +74,7 @@ export default {
       const { pathname } = new URL(request.url);
       if (request.method === 'OPTIONS') return json(204);
       if (request.method === 'GET' && pathname === '/key') return json(200, { server: env.SERVER_NAME, publicKey: (await serverKeys(env)).publicKey });
-      if (request.method === 'POST' && pathname === '/sign') {
-        const text = await request.text();
-        if (text.length > 10000) throw fail(413, 'Request too large');
-        let body;
-        try { body = JSON.parse(text); } catch {}
-        if (!isObj(body)) throw fail(400, 'Body must be a JSON object');
-        return json(200, await sign(env, body));
-      }
+      if (request.method === 'POST' && pathname === '/sign') return json(200, await sign(env, await readJson(request)));
       return json(404, { error: 'Not found' });
     } catch (e) {
       if (!e.status) console.error(e);

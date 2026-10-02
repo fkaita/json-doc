@@ -94,7 +94,7 @@ The `SERVERS` list is empty until the first server is running. A server is added
 
 Readers can also add servers to their own copy of `index.html`.
 
-If a server's key leaks, its entry gets an `until` time. Documents signed before that time stay valid.
+If a server's key leaks, its entry gets an `until` time, and documents with a later time are rejected. Documents with an earlier time still show ✓, but whoever has the leaked key can also put an earlier time on a forgery. For those, ask the server operator, who keeps a log of everything the server signed.
 
 ### Self-signed: unchanged only
 

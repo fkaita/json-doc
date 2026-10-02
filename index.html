@@ -53,7 +53,8 @@
   }
 
   // Signing servers trusted to confirm who signed and when. Keys come from here, never from the file.
-  // A leaked key gets an `until` time: documents the server signed before it stay valid.
+  // A leaked key gets an `until` time: later documents are rejected. Earlier ones still pass, but a leaked key
+  // can also fake an earlier time, so only the server's log can tell those apart.
   const SERVERS = {
     // 'sign.example.org': [{ publicKey: 'MCow…', until: null }],
   };
