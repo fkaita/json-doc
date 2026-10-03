@@ -2,6 +2,8 @@
 
 Exchange business documents as signed JSON: readable, portable and verifiable.
 
+![Paste a JSON document, sign it, and open it as a document with a green "Signed by" banner](assets/demo.gif)
+
 **Use it:** https://json-doc.com — or download `index.html` and open it in a browser.
 
 ## Why
@@ -69,6 +71,7 @@ Signature checks need a recent browser and a secure page: https://json-doc.com, 
 | `server/wrangler.toml` | Cloudflare settings for sign.json-doc.com. |
 | `server/package.json` | Lets Node.js load the server files. |
 | `samples/` | Example documents for each result. |
+| `assets/` | The demo animation in this README. |
 | `CNAME` | Tells GitHub Pages to serve the app at json-doc.com. |
 
 ## How signing works
