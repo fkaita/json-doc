@@ -1,10 +1,22 @@
-# json-doc
+# JSON Doc
 
-Open a JSON file and read it like a document. Sign it, and verify who signed it and when. The app is one HTML file: no dependencies, no build step.
+Exchange business documents as signed JSON: readable, portable and verifiable.
+
+![Paste a JSON document, sign it, and open it as a document with a green "Signed by" banner](assets/demo.gif)
 
 **Use it:** https://json-doc.com — or download `index.html` and open it in a browser.
 
-Everything runs in your browser. Documents never leave it: signing sends only your domain, your secret and a fingerprint of the document to the signing server.
+## Why
+
+Business documents such as invoices are usually created from data that software already has, sent to another party, and turned back into data there. Connecting every company's systems directly, or agreeing on an industry-standard format, takes a long time.
+
+JSON Doc lets you send the data itself, as JSON, and keeps it:
+
+- **Readable:** shown as a document you can print.
+- **Portable:** it's just a file, so you can keep using email.
+- **Verifiable:** a signature shows who sent it (their domain) and whether it has been changed.
+
+The app is one HTML file with no dependencies. Everything runs in your browser: documents never leave it, and signing sends only your domain, your secret and a fingerprint of the document to the signing server.
 
 ## Quick start
 
@@ -40,12 +52,12 @@ If the document is signed, a banner above it shows the result:
 
 - **Green ✓ Signed by example.com** — a [trusted](#how-signing-works) signing server confirms who signed it and when, and the document is unchanged.
 - **Amber ⚠ Signer not confirmed** — the document is unchanged since it was signed, but nobody confirms who signed it (self-signed). Ask the signer if the key shown is theirs.
-- **Red ✗** — the document or signature was changed, is missing, or comes from a server json-doc does not trust.
+- **Red ✗** — the document or signature was changed, is missing, or comes from a server JSON Doc does not trust.
 - **No banner** — not a signed file.
 
 Changing any value in a signed document breaks its signature.
 
-**✓ Signed by example.com** means whoever controls example.com signed this document at the time shown, and it hasn't changed since. Only trust a ✓ you see after opening the file yourself in json-doc: a screenshot or printout can be faked.
+**✓ Signed by example.com** means whoever controls example.com signed this document at the time shown, and it hasn't changed since. Only trust a ✓ you see after opening the file yourself in JSON Doc: a screenshot or printout can be faked.
 
 Signature checks need a recent browser and a secure page: https://json-doc.com, or `index.html` opened from your own computer.
 
@@ -59,6 +71,7 @@ Signature checks need a recent browser and a secure page: https://json-doc.com, 
 | `server/wrangler.toml` | Cloudflare settings for sign.json-doc.com. |
 | `server/package.json` | Lets Node.js load the server files. |
 | `samples/` | Example documents for each result. |
+| `assets/` | The demo animation in this README. |
 | `CNAME` | Tells GitHub Pages to serve the app at json-doc.com. |
 
 ## How signing works
@@ -76,7 +89,7 @@ The signature covers `document` in canonical JSON ([RFC 8785](https://www.rfc-ed
 }
 ```
 
-json-doc only trusts servers in the `SERVERS` list in `index.html`, starting with `sign.json-doc.com`, and checks the signature with the key from that list, never from the file. Readers can add servers to their own copy of `index.html`.
+JSON Doc only trusts servers in the `SERVERS` list in `index.html`, starting with `sign.json-doc.com`, and checks the signature with the key from that list, never from the file. Readers can add servers to their own copy of `index.html`.
 
 **Self-signed** (⚠): the signer uses their own key and includes it in the file. No server is needed.
 
@@ -139,11 +152,11 @@ To call the API from your own code: `POST /sign` with `{ "domain": "example.com"
      npx wrangler deploy
      npx wrangler secret put SIGNING_KEY
      ```
-3. To sign with it from your copy of json-doc, set `SIGN_SERVER` in `index.html`.
+3. To sign with it from your copy of JSON Doc, set `SIGN_SERVER` in `index.html`.
 
 **Getting your server trusted**
 
-json-doc only accepts signatures from servers in its trusted list, `SERVERS` in `index.html`. To add your server, open a pull request. It is accepted if the server:
+JSON Doc only accepts signatures from servers in its trusted list, `SERVERS` in `index.html`. To add your server, open a pull request. It is accepted if the server:
 
 - runs `server/worker.js`, or checks domains with DNS the same way
 - uses an accurate clock
