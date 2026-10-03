@@ -8,7 +8,7 @@ Exchange business documents as signed JSON: readable, portable and verifiable.
 
 ## Why
 
-Business documents such as invoices are usually created from data that software already has, sent to another party, and turned back into data there. Connecting every company's systems directly, or agreeing on an industry-standard format, takes a long time.
+Business documents are usually created from data that software already has, sent to another party, and turned back into data there. Connecting both sides' systems takes time, so files keep being sent by email.
 
 JSON Doc lets you send the data itself, as JSON, and keeps it:
 
@@ -16,7 +16,7 @@ JSON Doc lets you send the data itself, as JSON, and keeps it:
 - **Portable:** it's just a file, so you can keep using email.
 - **Verifiable:** a signature shows who sent it (their domain) and whether it has been changed.
 
-The app is one HTML file with no dependencies. Everything runs in your browser: documents never leave it, and signing sends only your domain, your secret and a fingerprint of the document to the signing server.
+The app is one HTML file with no dependencies. Documents never leave your browser: signing sends only a fingerprint of the document.
 
 ## Quick start
 
@@ -63,16 +63,16 @@ Signature checks need a recent browser and a secure page: https://json-doc.com, 
 
 ## Repository
 
-| Path | What it is |
-|---|---|
-| `index.html` | The whole app: reads, signs and verifies documents. Served at https://json-doc.com. |
-| `server/worker.js` | The signing server. Runs on Cloudflare Workers as-is, or on any host with `server/node.js`. |
-| `server/node.js` | Runs the signing server on Node.js instead. |
-| `server/wrangler.toml` | Cloudflare settings for sign.json-doc.com. |
-| `server/package.json` | Lets Node.js load the server files. |
-| `samples/` | Example documents for each result. |
-| `assets/` | The demo animation in this README. |
-| `CNAME` | Tells GitHub Pages to serve the app at json-doc.com. |
+| Path                   | What it is                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| `index.html`           | The whole app: reads, signs and verifies documents. Served at https://json-doc.com.         |
+| `server/worker.js`     | The signing server. Runs on Cloudflare Workers as-is, or on any host with `server/node.js`. |
+| `server/node.js`       | Runs the signing server on Node.js instead.                                                 |
+| `server/wrangler.toml` | Cloudflare settings for sign.json-doc.com.                                                  |
+| `server/package.json`  | Lets Node.js load the server files.                                                         |
+| `samples/`             | Example documents for each result.                                                          |
+| `assets/`              | The demo animation in this README.                                                          |
+| `CNAME`                | Tells GitHub Pages to serve the app at json-doc.com.                                        |
 
 ## How signing works
 
@@ -85,7 +85,12 @@ The signature covers `document` in canonical JSON ([RFC 8785](https://www.rfc-ed
 ```json
 {
   "document": { "...": "the content that was signed" },
-  "signature": { "server": "sign.example.org", "domain": "northwind.example", "time": "2026-10-01T09:30:00.000Z", "value": "base64 signature" }
+  "signature": {
+    "server": "sign.example.org",
+    "domain": "northwind.example",
+    "time": "2026-10-01T09:30:00.000Z",
+    "value": "base64 signature"
+  }
 }
 ```
 
@@ -96,7 +101,10 @@ JSON Doc only trusts servers in the `SERVERS` list in `index.html`, starting wit
 ```json
 {
   "document": { "...": "the content that was signed" },
-  "signature": { "publicKey": "base64 Ed25519 public key (SPKI)", "value": "base64 Ed25519 signature" }
+  "signature": {
+    "publicKey": "base64 Ed25519 public key (SPKI)",
+    "value": "base64 Ed25519 signature"
+  }
 }
 ```
 
