@@ -16,7 +16,7 @@ JSON Doc lets you send the data itself, as JSON, and keeps it:
 - **Portable:** it's just a file, so you can keep using email.
 - **Verifiable:** a signature shows who sent it (their domain) and whether it has been changed.
 
-The app is one HTML file with no dependencies. Documents never leave your browser: signing sends only a fingerprint of the document.
+The app is one HTML file with no dependencies. Documents never leave your browser: signing sends only your domain, your secret and a fingerprint of the document to the signing server.
 
 ## Quick start
 
